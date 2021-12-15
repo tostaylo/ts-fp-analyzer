@@ -17,41 +17,44 @@ export function processFiles(filenames: string[]) {
 		});
 
 		rootNodes.forEach((node: ts.Node) => {
-			checkNodes(node, typeChecker);
+			checkNodesRecursively(node, typeChecker);
 		});
 		console.log({ locals });
 	});
 }
 
-function checkNodes(node: ts.Node, typeChecker: ts.TypeChecker) {
+function checkNodesRecursively(node: ts.Node, typeChecker: ts.TypeChecker) {
 	node.forEachChild((child) => {
-		const syntaxKind = ts.SyntaxKind[child.kind];
-		console.log({ syntaxKind, text: child.getText() });
-
-		if (ts.isVariableDeclaration(child)) {
-			const type = typeChecker.getTypeAtLocation(child);
-			const typeName = typeChecker.typeToString(type, child);
-			const name = ts.getNameOfDeclaration(child).getText();
-
-			locals.set(name, getType(typeName));
-		}
-
-		if (ts.isBinaryExpression(child)) {
-			if (locals.has(child.getFirstToken().getText())) {
-				console.log('local');
-			}
-			// switch (child.getFirstToken().kind) {
-			// 	case ts.SyntaxKind.ElementAccessExpression: {
-			// 	}
-			// 	case ts.SyntaxKind.PropertyAccessExpression: {
-			// 	}
-			// 	case ts.SyntaxKind.Identifier: {
-			// 	}
-			// }
-		}
-
-		checkNodes(child, typeChecker);
+		checkNode(child, typeChecker);
+		checkNodesRecursively(child, typeChecker);
 	});
+}
+
+function checkNode(child: ts.Node, typeChecker: ts.TypeChecker) {
+	const syntaxKind = ts.SyntaxKind[child.kind];
+	console.log({ syntaxKind, text: child.getText() });
+
+	if (ts.isVariableDeclaration(child)) {
+		const type = typeChecker.getTypeAtLocation(child);
+		const typeName = typeChecker.typeToString(type, child);
+		const name = ts.getNameOfDeclaration(child).getText();
+
+		locals.set(name, getType(typeName));
+	}
+
+	if (ts.isBinaryExpression(child)) {
+		if (locals.has(child.getFirstToken().getText())) {
+			console.log('local');
+		}
+		// switch (child.getFirstToken().kind) {
+		// 	case ts.SyntaxKind.ElementAccessExpression: {
+		// 	}
+		// 	case ts.SyntaxKind.PropertyAccessExpression: {
+		// 	}
+		// 	case ts.SyntaxKind.Identifier: {
+		// 	}
+		// }
+	}
 }
 
 function getType(typeName: string) {
