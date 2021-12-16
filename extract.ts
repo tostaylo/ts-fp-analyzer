@@ -1,52 +1,59 @@
 import * as ts from 'typescript';
 
-let locals = new Map();
+type Context = { locals: any; mutatesInScope: boolean; mutatesOutsideScope: boolean };
+const context: Map<string, Context> = new Map();
+//TODO: default Context object needed. Class instance perhaps
+context.set('global', { locals: {}, mutatesInScope: false, mutatesOutsideScope: false });
 
 export function processFiles(filenames: string[]) {
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
 		const sourceFile = program.getSourceFile(filename);
 		const typeChecker = program.getTypeChecker();
-		const rootNodes: ts.Node[] = [];
 
 		// let codeAsString = fs.readFileSync(filename).toString();
 		// const sourceFile: ts.SourceFile = ts.createSourceFile(filename, codeAsString, ts.ScriptTarget.Latest);
 
-		sourceFile.forEachChild((child: ts.Node) => {
-			rootNodes.push(child);
+		sourceFile?.forEachChild((node: ts.Node) => {
+			checkNode(node, typeChecker);
 		});
 
-		rootNodes.forEach((node: ts.Node) => {
-			checkNodesRecursively(node, typeChecker);
-		});
-		console.log({ locals });
+		console.log({ context });
 	});
 }
 
-function checkNodesRecursively(node: ts.Node, typeChecker: ts.TypeChecker) {
-	node.forEachChild((child) => {
-		checkNode(child, typeChecker);
-		checkNodesRecursively(child, typeChecker);
-	});
-}
+function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string = 'global') {
+	// const syntaxKind = ts.SyntaxKind[node.kind];
+	// console.log({ syntaxKind, text: node.getText(), namespace });
 
-function checkNode(child: ts.Node, typeChecker: ts.TypeChecker) {
-	const syntaxKind = ts.SyntaxKind[child.kind];
-	console.log({ syntaxKind, text: child.getText() });
-
-	if (ts.isVariableDeclaration(child)) {
-		const type = typeChecker.getTypeAtLocation(child);
-		const typeName = typeChecker.typeToString(type, child);
-		const name = ts.getNameOfDeclaration(child).getText();
-
-		locals.set(name, getType(typeName));
+	if (ts.isFunctionDeclaration(node)) {
+		namespace = ts.getNameOfDeclaration(node)?.getText() || namespace;
+		context.set(namespace, { locals: {}, mutatesInScope: false, mutatesOutsideScope: false });
 	}
 
-	if (ts.isBinaryExpression(child)) {
-		if (locals.has(child.getFirstToken().getText())) {
-			console.log('local');
+	if (ts.isVariableDeclaration(node)) {
+		const type = typeChecker.getTypeAtLocation(node);
+		const typeName = typeChecker.typeToString(type, node);
+		const name = ts.getNameOfDeclaration(node)?.getText() || '';
+
+		const ctx = context.get(namespace);
+		const locals = ctx?.locals;
+		locals[name] = { type: getType(typeName) };
+		context.set(namespace, { ...ctx, locals } as Context);
+	}
+
+	if (ts.isBinaryExpression(node)) {
+		const name = node.getFirstToken()?.getText();
+		const ctx = context.get(namespace);
+		const isLocal = ctx?.locals[name as string];
+		if (isLocal) {
+			console.log({ isLocal: true, namespace, name });
+			console.log('mutation in scope');
+		} else {
+			console.log({ isLocal: false, namespace, name });
+			console.log('mutation out of scope');
 		}
-		// switch (child.getFirstToken().kind) {
+		// switch (node.getFirstToken().kind) {
 		// 	case ts.SyntaxKind.ElementAccessExpression: {
 		// 	}
 		// 	case ts.SyntaxKind.PropertyAccessExpression: {
@@ -55,12 +62,17 @@ function checkNode(child: ts.Node, typeChecker: ts.TypeChecker) {
 		// 	}
 		// }
 	}
+
+	node.forEachChild((child) => {
+		checkNode(child, typeChecker, namespace);
+	});
 }
 
-function getType(typeName: string) {
+function getType(typeName: string): string {
 	if (typeName.includes('[]')) {
 		return 'Array';
 	}
+	return '';
 }
 
 // for each function determine if there are any other function calls, mutations
