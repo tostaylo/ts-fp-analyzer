@@ -1,16 +1,16 @@
 import * as ts from 'typescript';
 
-function createDefaultCtx(namespace: string = '') {
+export function createDefaultCtx(namespace: string = '') {
 	return { namespace, fnCalls: {}, locals: {}, mutatesInScope: false, mutatesOutsideScope: false };
 }
 
 type Context = { fnCalls: any; locals: any; mutatesInScope: boolean; mutatesOutsideScope: boolean };
 
-const context: Map<string, Context> = new Map();
+export const context: Map<string, Context> = new Map();
 
 context.set('global', createDefaultCtx());
 
-export function processFiles(filenames: string[]) {
+export function processFiles(filenames: string[]): typeof context {
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
 		const sourceFile = program.getSourceFile(filename);
@@ -22,9 +22,8 @@ export function processFiles(filenames: string[]) {
 		sourceFile?.forEachChild((node: ts.Node) => {
 			checkNode(node, typeChecker);
 		});
-
-		logContext();
 	});
+	return context;
 }
 
 function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string = 'global') {
