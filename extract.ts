@@ -1,10 +1,10 @@
 import * as ts from 'typescript';
 
-function createDefaultCtx() {
-	return { locals: {}, mutatesInScope: false, mutatesOutsideScope: false };
+function createDefaultCtx(namespace: string = '') {
+	return { namespace, fnCalls: {}, locals: {}, mutatesInScope: false, mutatesOutsideScope: false };
 }
 
-type Context = { locals: any; mutatesInScope: boolean; mutatesOutsideScope: boolean };
+type Context = { fnCalls: any; locals: any; mutatesInScope: boolean; mutatesOutsideScope: boolean };
 
 const context: Map<string, Context> = new Map();
 
@@ -28,31 +28,36 @@ export function processFiles(filenames: string[]) {
 }
 
 function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string = 'global') {
+	const ctx = context.get(namespace);
+	if (!ctx) return;
 	// const syntaxKind = ts.SyntaxKind[node.kind];
 	// console.log({ syntaxKind, text: node.getText(), namespace });
 
 	if (ts.isFunctionDeclaration(node)) {
+		// Handle function hoisting
+		const calledFunction = ctx.fnCalls[namespace];
+		if (calledFunction) {
+			ctx.fnCalls[namespace] = { ...calledFunction, namespace };
+		}
+
 		namespace = ts.getNameOfDeclaration(node)?.getText() || namespace;
-		context.set(namespace, createDefaultCtx());
+		context.set(namespace, createDefaultCtx(namespace));
 	}
 
 	if (ts.isVariableDeclaration(node)) {
 		const type = typeChecker.getTypeAtLocation(node);
 		const typeName = typeChecker.typeToString(type, node);
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
-
-		const ctx = context.get(namespace);
 		const locals = ctx?.locals;
-		locals[name] = { type: getType(typeName) };
-		context.set(namespace, { ...ctx, locals } as Context);
+
+		locals[name] = { name, type: getType(typeName) };
+		context.set(namespace, { ...ctx, locals });
 	}
 
 	if (ts.isBinaryExpression(node)) {
-		const name = node.getFirstToken()?.getText();
-		const ctx = context.get(namespace);
-		if (!ctx) return;
+		const name = node.getFirstToken()?.getText() as string;
+		const isLocal = ctx?.locals[name];
 
-		const isLocal = ctx?.locals[name as string];
 		if (isLocal) {
 			context.set(namespace, { ...ctx, mutatesInScope: true });
 		} else {
@@ -66,6 +71,11 @@ function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string
 		// 	case ts.SyntaxKind.Identifier: {
 		// 	}
 		// }
+	}
+
+	if (ts.isCallExpression(node)) {
+		const name = node.expression.getText();
+		context.set(namespace, { ...ctx, fnCalls: { [name]: { name, namespace } } });
 	}
 
 	node.forEachChild((child) => {
@@ -95,9 +105,16 @@ function logContext() {
 	context.forEach((value, key) => {
 		console.log('--------------------------------------');
 		console.log({ namespace: key, context: value });
+		console.log('locals');
 		console.log(
 			Object.entries(value.locals).forEach(([key, val]) => {
-				console.log({ localVar: key, localVarAttributes: val });
+				console.log(key, val);
+			})
+		);
+		console.log('fnCalls');
+		console.log(
+			Object.entries(value.fnCalls).forEach(([key, val]) => {
+				console.log(key, val);
 			})
 		);
 		console.log('--------------------------------------');

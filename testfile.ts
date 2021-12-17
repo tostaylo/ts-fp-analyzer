@@ -1,11 +1,11 @@
-function one() {
-	let onesLocal = 1;
-	onesLocal = 2;
-}
-let globalVar = 1;
-globalVar = 3;
+function one() {}
+one();
+
 function two() {
-	globalVar = 4;
+	let arr = [1];
+	arr.push(2);
+	one();
+	function one() {}
 }
 // a = 2;
 
