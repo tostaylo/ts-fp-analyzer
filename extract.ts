@@ -1,16 +1,15 @@
 import * as ts from 'typescript';
+import { Ctx, ContextMap } from './types';
 
-export function createDefaultCtx(namespace = '') {
-	return { namespace, fnCalls: {}, locals: {}, mutatesInScope: false, mutatesOutsideScope: false };
+export function createDefaultCtx(namespace = ''): Ctx {
+	return { namespace, fnCalls: {}, locals: {} as Ctx['locals'], mutatesInScope: false, mutatesOutsideScope: false };
 }
 
-type Context = { fnCalls: any; locals: any; mutatesInScope: boolean; mutatesOutsideScope: boolean };
-
-export const context: Map<string, Context> = new Map();
+export const context: ContextMap = new Map();
 
 context.set('global', createDefaultCtx());
 
-export function processFiles(filenames: string[]): typeof context {
+export function processFiles(filenames: string[]): ContextMap {
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
 		const sourceFile = program.getSourceFile(filename);
@@ -87,35 +86,4 @@ function getType(typeName: string): string {
 		return 'Array';
 	}
 	return '';
-}
-
-// for each function determine if there are any other function calls, mutations
-// if function calls or mutations determine if those are local or outside the scope of the function
-// will need to keep track of local variables of function to determine if mutating.
-
-// if no function calls and we return a value it is a calculation
-
-// if function returns something and it's inner function calls do not have side effects it is a calculation
-
-//get local variables
-//determine if any local variables are reassigned
-
-function logContext() {
-	context.forEach((value, key) => {
-		console.log('--------------------------------------');
-		console.log({ namespace: key, context: value });
-		console.log('locals');
-		console.log(
-			Object.entries(value.locals).forEach(([key, val]) => {
-				console.log(key, val);
-			})
-		);
-		console.log('fnCalls');
-		console.log(
-			Object.entries(value.fnCalls).forEach(([key, val]) => {
-				console.log(key, val);
-			})
-		);
-		console.log('--------------------------------------');
-	});
 }
