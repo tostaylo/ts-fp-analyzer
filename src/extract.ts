@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { Ctx, ContextMap } from './types';
+import { Ctx, ContextMap } from '../types';
 
 export function createDefaultCtx(namespace = ''): Ctx {
 	return { namespace, fnCalls: {}, locals: {} as Ctx['locals'], mutatesInScope: false, mutatesOutsideScope: false };
