@@ -1,9 +1,14 @@
 import * as ts from 'typescript';
 
+function createDefaultCtx() {
+	return { locals: {}, mutatesInScope: false, mutatesOutsideScope: false };
+}
+
 type Context = { locals: any; mutatesInScope: boolean; mutatesOutsideScope: boolean };
+
 const context: Map<string, Context> = new Map();
-//TODO: default Context object needed. Class instance perhaps
-context.set('global', { locals: {}, mutatesInScope: false, mutatesOutsideScope: false });
+
+context.set('global', createDefaultCtx());
 
 export function processFiles(filenames: string[]) {
 	filenames.forEach((filename) => {
@@ -18,7 +23,7 @@ export function processFiles(filenames: string[]) {
 			checkNode(node, typeChecker);
 		});
 
-		console.log({ context });
+		logContext();
 	});
 }
 
@@ -28,7 +33,7 @@ function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string
 
 	if (ts.isFunctionDeclaration(node)) {
 		namespace = ts.getNameOfDeclaration(node)?.getText() || namespace;
-		context.set(namespace, { locals: {}, mutatesInScope: false, mutatesOutsideScope: false });
+		context.set(namespace, createDefaultCtx());
 	}
 
 	if (ts.isVariableDeclaration(node)) {
@@ -45,13 +50,13 @@ function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string
 	if (ts.isBinaryExpression(node)) {
 		const name = node.getFirstToken()?.getText();
 		const ctx = context.get(namespace);
+		if (!ctx) return;
+
 		const isLocal = ctx?.locals[name as string];
 		if (isLocal) {
-			console.log({ isLocal: true, namespace, name });
-			console.log('mutation in scope');
+			context.set(namespace, { ...ctx, mutatesInScope: true });
 		} else {
-			console.log({ isLocal: false, namespace, name });
-			console.log('mutation out of scope');
+			context.set(namespace, { ...ctx, mutatesOutsideScope: true });
 		}
 		// switch (node.getFirstToken().kind) {
 		// 	case ts.SyntaxKind.ElementAccessExpression: {
@@ -85,3 +90,16 @@ function getType(typeName: string): string {
 
 //get local variables
 //determine if any local variables are reassigned
+
+function logContext() {
+	context.forEach((value, key) => {
+		console.log('--------------------------------------');
+		console.log({ namespace: key, context: value });
+		console.log(
+			Object.entries(value.locals).forEach(([key, val]) => {
+				console.log({ localVar: key, localVarAttributes: val });
+			})
+		);
+		console.log('--------------------------------------');
+	});
+}
