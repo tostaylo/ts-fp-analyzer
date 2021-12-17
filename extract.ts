@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 
-export function createDefaultCtx(namespace: string = '') {
+export function createDefaultCtx(namespace = '') {
 	return { namespace, fnCalls: {}, locals: {}, mutatesInScope: false, mutatesOutsideScope: false };
 }
 
@@ -26,7 +26,7 @@ export function processFiles(filenames: string[]): typeof context {
 	return context;
 }
 
-function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace: string = 'global') {
+function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace = 'global') {
 	const ctx = context.get(namespace);
 	if (!ctx) return;
 	// const syntaxKind = ts.SyntaxKind[node.kind];
