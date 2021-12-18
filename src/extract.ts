@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { ContextMap } from '../types';
-import { createCtx } from '../utils';
+import { createCtx, createLocal } from '../utils';
 
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
@@ -44,9 +44,9 @@ function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeCheck
 		const typeName = typeChecker.typeToString(type, node);
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const locals = ctx?.locals;
+		const local = createLocal(name, getType(typeName));
 
-		locals[name] = { name, type: getType(typeName) };
-		context.set(namespace, { ...ctx, locals });
+		context.set(namespace, { ...ctx, locals: { ...locals, ...local } });
 	}
 
 	if (ts.isBinaryExpression(node)) {

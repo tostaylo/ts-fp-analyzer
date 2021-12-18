@@ -33,7 +33,7 @@ function createFn(namespace, locals, mutatesInScope, mutatesOutsideScope, fnCall
 		namespace,
 		mutatesInScope,
 		mutatesOutsideScope,
-		locals: createLocals(locals),
+		locals: createLocals({}, locals),
 		fnCalls,
 	};
 }
