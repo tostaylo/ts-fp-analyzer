@@ -35,7 +35,7 @@ describe('variables', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: globalNamespace,
-				locals: { first: { name: 'first', type: '' }, second: { name: 'second', type: '' } },
+				locals: { first: { name: 'first', type: '"first"' }, second: { name: 'second', type: 'string' } },
 			})
 		);
 
@@ -45,7 +45,7 @@ describe('variables', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
-				locals: { third: { name: 'third', type: '' } },
+				locals: { third: { name: 'third', type: '"third"' } },
 			})
 		);
 
@@ -63,7 +63,7 @@ describe('mutations', () => {
 				namespace: globalNamespace,
 				kind: globalKind,
 				mutatesInScope: true,
-				locals: createLocals({}, [{ name: 'a', type: '' }]),
+				locals: createLocals({}, [{ name: 'a', type: 'number' }]),
 			})
 		);
 		expected.set(
@@ -75,7 +75,7 @@ describe('mutations', () => {
 					kind: functionDeclarationKind,
 					mutatesInScope: true,
 					mutatesOutsideScope: true,
-					locals: createLocals({}, [{ name: 'b', type: '' }]),
+					locals: createLocals({}, [{ name: 'b', type: 'number' }]),
 				})
 			)
 		);
@@ -87,7 +87,7 @@ describe('mutations', () => {
 					namespace: globalNamespace,
 					kind: functionDeclarationKind,
 					mutatesInScope: true,
-					locals: createLocals({}, [{ name: 'a', type: '' }]),
+					locals: createLocals({}, [{ name: 'a', type: 'number' }]),
 				})
 			)
 		);

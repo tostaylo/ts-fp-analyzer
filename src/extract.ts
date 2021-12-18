@@ -69,7 +69,7 @@ function checkNode(
 		const typeName = typeChecker.typeToString(type, node);
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const locals = ctx?.locals;
-		const local = createLocal({ name, type: getType(typeName) });
+		const local = createLocal({ name, type: typeName });
 		// node.forEachChild((child) => {
 		// 	const syntaxKind = ts.SyntaxKind[child.kind];
 
@@ -113,11 +113,4 @@ function checkNode(
 	node.forEachChild((child) => {
 		checkNode(child, context, typeChecker, namespace, node);
 	});
-}
-
-function getType(typeName: string): string {
-	if (typeName.includes('[]')) {
-		return 'Array';
-	}
-	return '';
 }
