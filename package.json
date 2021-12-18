@@ -4,6 +4,7 @@
 	"description": "A Typescript functional programming analyzer",
 	"main": "index.js",
 	"scripts": {
+		"actions:test": "jest",
 		"test": "tsc && jest",
 		"lint": "eslint . --ext .ts",
 		"prepare": "husky install"

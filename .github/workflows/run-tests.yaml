@@ -3,7 +3,7 @@
 
 name: Node.js CI
 
-on: [push, pull, workflow_dispatch]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
@@ -20,4 +20,4 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      - run: npm test
+      - run: npm run actions:test
