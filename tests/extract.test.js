@@ -6,7 +6,7 @@ const functionDeclarationKind = 'FunctionDeclaration';
 const globalKind = 'global';
 
 describe('functions', () => {
-	test('detects function declaration', () => {
+	test('given a single function declaration, should detect function declaration', () => {
 		const expected = new Map();
 		expected.set('global', createCtx({ namespace: 'global', kind: globalKind }));
 		expected.set('global.one', createCtx({ namespace: 'global', kind: functionDeclarationKind }));
@@ -16,7 +16,7 @@ describe('functions', () => {
 });
 
 describe('arrow functions', () => {
-	xtest('detects arrow function declaration', () => {
+	xtest('given a single arrow function , should detect arrow function declaration', () => {
 		const expected = new Map();
 		// expected.set('global', createCtx({ namespace: 'global' }));
 		// expected.set('one', createCtx({ namespace: 'one' }));
@@ -26,7 +26,7 @@ describe('arrow functions', () => {
 });
 
 describe('variables', () => {
-	test('detects variables', () => {
+	test('given a global variable and a function scoped variable, should detect variables', () => {
 		const expected = new Map();
 		expected.set(
 			'global',
@@ -47,7 +47,7 @@ describe('variables', () => {
 });
 
 describe('mutations', () => {
-	test('detects mutations', () => {
+	test('given variables declared with "let" and mutations occur globally and locally, should detect mutations', () => {
 		const expected = new Map();
 		expected.set(
 			'global',
@@ -92,7 +92,7 @@ describe('mutations', () => {
 // how to detect function calls with recursion? kinda edge case since the call name would have to match another global /// function name. maybe namespace is an array which is pushed into?
 
 describe('hoisting', () => {
-	test('detects hoisted functions', () => {
+	test('given a function executed before declaration, it detects hoisted functions and binds the correct namespace', () => {
 		const expected = new Map();
 		expected.set(
 			'global',
