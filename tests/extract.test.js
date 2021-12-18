@@ -1,13 +1,15 @@
 const { processFiles } = require('../bin/src/extract');
 const { createCtx, createLocals, createFnCalls } = require('../bin/utils/index');
-const functionDeclaration = 'FunctionDeclaration';
-const global = 'global';
+const { defaultCtx } = require('../bin/models/index');
+
+const functionDeclarationKind = 'FunctionDeclaration';
+const globalKind = 'global';
 
 describe('functions', () => {
 	test('detects function declaration', () => {
 		const expected = new Map();
-		expected.set('global', createCtx({ namespace: 'global', kind: global }));
-		expected.set('global.one', createCtx({ namespace: 'global', kind: functionDeclaration }));
+		expected.set('global', createCtx({ namespace: 'global', kind: globalKind }));
+		expected.set('global.one', createCtx({ namespace: 'global', kind: functionDeclarationKind }));
 
 		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
 	});
@@ -37,21 +39,12 @@ describe('variables', () => {
 
 		expected.set(
 			'global.one',
-			createCtx({ namespace: 'global', kind: functionDeclaration, locals: { third: { name: 'third', type: '' } } })
+			createCtx({ namespace: 'global', kind: functionDeclarationKind, locals: { third: { name: 'third', type: '' } } })
 		);
 
 		expect(processFiles(['subjects/variables.ts'])).toEqual(expected);
 	});
 });
-
-const defaultCtx = {
-	namespace: '',
-	kind: '',
-	locals: {},
-	mutatesInScope: false,
-	mutatesOutsideScope: false,
-	fnCalls: {},
-};
 
 describe('mutations', () => {
 	test('detects mutations', () => {
@@ -61,7 +54,7 @@ describe('mutations', () => {
 			createCtx({
 				...defaultCtx,
 				namespace: 'global',
-				kind: global,
+				kind: globalKind,
 				mutatesInScope: true,
 				locals: createLocals({}, [{ name: 'a', type: '' }]),
 			})
@@ -72,7 +65,7 @@ describe('mutations', () => {
 				createCtx({
 					...defaultCtx,
 					namespace: 'global',
-					kind: functionDeclaration,
+					kind: functionDeclarationKind,
 					mutatesInScope: true,
 					mutatesOutsideScope: true,
 					locals: createLocals({}, [{ name: 'b', type: '' }]),
@@ -85,7 +78,7 @@ describe('mutations', () => {
 				createCtx({
 					...defaultCtx,
 					namespace: 'global',
-					kind: functionDeclaration,
+					kind: functionDeclarationKind,
 					mutatesInScope: true,
 					locals: createLocals({}, [{ name: 'a', type: '' }]),
 				})
@@ -106,24 +99,27 @@ describe('hoisting', () => {
 			createCtx({
 				...defaultCtx,
 				namespace: 'global',
-				kind: global,
+				kind: globalKind,
 				fnCalls: createFnCalls({}, [
 					{ name: 'one', namespace: 'global' },
 					{ name: 'two', namespace: 'global' },
 				]),
 			})
 		);
-		expected.set('global.one', createCtx({ ...defaultCtx, namespace: 'global', kind: functionDeclaration }));
+		expected.set('global.one', createCtx({ ...defaultCtx, namespace: 'global', kind: functionDeclarationKind }));
 		expected.set(
 			'global.two',
 			createCtx({
 				...defaultCtx,
 				namespace: 'global',
-				kind: functionDeclaration,
+				kind: functionDeclarationKind,
 				fnCalls: createFnCalls({}, [{ name: 'three', namespace: 'global.two' }]),
 			})
 		);
-		expected.set('global.two.three', createCtx({ ...defaultCtx, namespace: 'global.two', kind: functionDeclaration }));
+		expected.set(
+			'global.two.three',
+			createCtx({ ...defaultCtx, namespace: 'global.two', kind: functionDeclarationKind })
+		);
 
 		expect(processFiles(['subjects/hoisting.ts'])).toEqual(expected);
 	});
