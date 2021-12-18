@@ -1,9 +1,25 @@
-const { processFiles, createDefaultCtx } = require('../bin/src/extract');
+const { processFiles, createCtx } = require('../bin/src/extract');
 
-const def = new Map();
-def.set('global', createDefaultCtx());
-def.set('one', createDefaultCtx('one'));
+describe('functions', () => {
+	test('detects function declaration', () => {
+		const expected = new Map();
+		expected.set('global', createCtx({}));
+		expected.set('one', createCtx({ namespace: 'one' }));
 
-test('detects function declaration', () => {
-	expect(processFiles(['subjects/functionDec.ts'])).toEqual(def);
+		expect(processFiles(['subjects/functionDec.ts'])).toEqual(expected);
+	});
+});
+
+describe('variables', () => {
+	test('detects variables', () => {
+		const expected = new Map();
+		expected.set(
+			'global',
+			createCtx({ locals: { first: { name: 'first', type: '' }, second: { name: 'second', type: '' } } })
+		);
+
+		expected.set('one', createCtx({ namespace: 'one', locals: { third: { name: 'third', type: '' } } }));
+
+		expect(processFiles(['subjects/variables.ts'])).toEqual(expected);
+	});
 });

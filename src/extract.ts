@@ -1,15 +1,20 @@
 import * as ts from 'typescript';
 import { Ctx, ContextMap } from '../types';
 
-export function createDefaultCtx(namespace = ''): Ctx {
-	return { namespace, fnCalls: {}, locals: {} as Ctx['locals'], mutatesInScope: false, mutatesOutsideScope: false };
+export function createCtx({
+	namespace = '',
+	fnCalls = {},
+	locals = {},
+	mutatesInScope = false,
+	mutatesOutsideScope = false,
+}): Ctx {
+	return { namespace, fnCalls, locals, mutatesInScope, mutatesOutsideScope };
 }
 
-export const context: ContextMap = new Map();
-
-context.set('global', createDefaultCtx());
-
 export function processFiles(filenames: string[]): ContextMap {
+	const context: ContextMap = new Map();
+	context.set('global', createCtx({}));
+
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
 		const sourceFile = program.getSourceFile(filename);
@@ -19,13 +24,14 @@ export function processFiles(filenames: string[]): ContextMap {
 		// const sourceFile: ts.SourceFile = ts.createSourceFile(filename, codeAsString, ts.ScriptTarget.Latest);
 
 		sourceFile?.forEachChild((node: ts.Node) => {
-			checkNode(node, typeChecker);
+			checkNode(node, context, typeChecker);
 		});
 	});
+
 	return context;
 }
 
-function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace = 'global') {
+function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeChecker, namespace = 'global') {
 	const ctx = context.get(namespace);
 	if (!ctx) return;
 	// const syntaxKind = ts.SyntaxKind[node.kind];
@@ -39,7 +45,7 @@ function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace = 'glob
 		}
 
 		namespace = ts.getNameOfDeclaration(node)?.getText() || namespace;
-		context.set(namespace, createDefaultCtx(namespace));
+		context.set(namespace, createCtx({ namespace }));
 	}
 
 	if (ts.isVariableDeclaration(node)) {
@@ -77,7 +83,7 @@ function checkNode(node: ts.Node, typeChecker: ts.TypeChecker, namespace = 'glob
 	}
 
 	node.forEachChild((child) => {
-		checkNode(child, typeChecker, namespace);
+		checkNode(child, context, typeChecker, namespace);
 	});
 }
 
