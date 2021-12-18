@@ -5,7 +5,8 @@
 	"main": "index.js",
 	"scripts": {
 		"test": "tsc && jest",
-		"lint": "eslint . --ext .ts"
+		"lint": "eslint . --ext .ts",
+		"prepare": "husky install"
 	},
 	"author": "tostaylo",
 	"license": "ISC",
@@ -18,6 +19,7 @@
 		"@typescript-eslint/eslint-plugin": "^5.7.0",
 		"@typescript-eslint/parser": "^5.7.0",
 		"eslint": "^8.4.1",
+		"husky": "^7.0.4",
 		"jest": "^27.4.5"
 	}
 }
