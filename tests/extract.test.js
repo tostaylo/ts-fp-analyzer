@@ -9,8 +9,8 @@ const globalNamespace = 'global';
 describe('functions', () => {
 	test('given a single function declaration, should detect function declaration', () => {
 		const expected = new Map();
-		expected.set(globalNamespace, createCtx({ namespace: globalNamespace, kind: globalKind }));
-		expected.set('global.one', createCtx({ namespace: globalNamespace, kind: functionDeclarationKind }));
+		expected.set(globalNamespace, createCtx({ ...defaultCtx, namespace: globalNamespace, kind: globalKind }));
+		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
 
 		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
 	});
@@ -32,6 +32,7 @@ describe('variables', () => {
 		expected.set(
 			globalNamespace,
 			createCtx({
+				...defaultCtx,
 				namespace: globalNamespace,
 				kind: globalNamespace,
 				locals: { first: { name: 'first', type: '' }, second: { name: 'second', type: '' } },
@@ -41,6 +42,7 @@ describe('variables', () => {
 		expected.set(
 			'global.one',
 			createCtx({
+				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
 				locals: { third: { name: 'third', type: '' } },
@@ -93,8 +95,6 @@ describe('mutations', () => {
 		expect(processFiles(['subjects/mutations.ts'])).toEqual(expected);
 	});
 });
-
-// how to detect function calls with recursion? kinda edge case since the call name would have to match another global /// function name. maybe namespace is an array which is pushed into?
 
 describe('hoisting', () => {
 	test('given a function executed before declaration, it detects hoisted functions and binds the correct namespace', () => {
