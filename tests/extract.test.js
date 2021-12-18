@@ -4,12 +4,13 @@ const { defaultCtx } = require('../bin/models/index');
 
 const functionDeclarationKind = 'FunctionDeclaration';
 const globalKind = 'global';
+const globalNamespace = 'global';
 
 describe('functions', () => {
 	test('given a single function declaration, should detect function declaration', () => {
 		const expected = new Map();
-		expected.set('global', createCtx({ namespace: 'global', kind: globalKind }));
-		expected.set('global.one', createCtx({ namespace: 'global', kind: functionDeclarationKind }));
+		expected.set(globalNamespace, createCtx({ namespace: globalNamespace, kind: globalKind }));
+		expected.set('global.one', createCtx({ namespace: globalNamespace, kind: functionDeclarationKind }));
 
 		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
 	});
@@ -18,7 +19,7 @@ describe('functions', () => {
 describe('arrow functions', () => {
 	xtest('given a single arrow function , should detect arrow function declaration', () => {
 		const expected = new Map();
-		// expected.set('global', createCtx({ namespace: 'global' }));
+		// expected.set(globalNamespace, createCtx({ namespace: globalNamespace }));
 		// expected.set('one', createCtx({ namespace: 'one' }));
 
 		expect(processFiles(['subjects/arrowFns.ts'])).toEqual(expected);
@@ -29,17 +30,21 @@ describe('variables', () => {
 	test('given a global variable and a function scoped variable, should detect variables', () => {
 		const expected = new Map();
 		expected.set(
-			'global',
+			globalNamespace,
 			createCtx({
-				namespace: 'global',
-				kind: 'global',
+				namespace: globalNamespace,
+				kind: globalNamespace,
 				locals: { first: { name: 'first', type: '' }, second: { name: 'second', type: '' } },
 			})
 		);
 
 		expected.set(
 			'global.one',
-			createCtx({ namespace: 'global', kind: functionDeclarationKind, locals: { third: { name: 'third', type: '' } } })
+			createCtx({
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				locals: { third: { name: 'third', type: '' } },
+			})
 		);
 
 		expect(processFiles(['subjects/variables.ts'])).toEqual(expected);
@@ -50,10 +55,10 @@ describe('mutations', () => {
 	test('given variables declared with "let" and mutations occur globally and locally, should detect mutations', () => {
 		const expected = new Map();
 		expected.set(
-			'global',
+			globalNamespace,
 			createCtx({
 				...defaultCtx,
-				namespace: 'global',
+				namespace: globalNamespace,
 				kind: globalKind,
 				mutatesInScope: true,
 				locals: createLocals({}, [{ name: 'a', type: '' }]),
@@ -64,7 +69,7 @@ describe('mutations', () => {
 			createCtx(
 				createCtx({
 					...defaultCtx,
-					namespace: 'global',
+					namespace: globalNamespace,
 					kind: functionDeclarationKind,
 					mutatesInScope: true,
 					mutatesOutsideScope: true,
@@ -77,7 +82,7 @@ describe('mutations', () => {
 			createCtx(
 				createCtx({
 					...defaultCtx,
-					namespace: 'global',
+					namespace: globalNamespace,
 					kind: functionDeclarationKind,
 					mutatesInScope: true,
 					locals: createLocals({}, [{ name: 'a', type: '' }]),
@@ -95,23 +100,23 @@ describe('hoisting', () => {
 	test('given a function executed before declaration, it detects hoisted functions and binds the correct namespace', () => {
 		const expected = new Map();
 		expected.set(
-			'global',
+			globalNamespace,
 			createCtx({
 				...defaultCtx,
-				namespace: 'global',
+				namespace: globalNamespace,
 				kind: globalKind,
 				fnCalls: createFnCalls({}, [
-					{ name: 'one', namespace: 'global' },
-					{ name: 'two', namespace: 'global' },
+					{ name: 'one', namespace: globalNamespace },
+					{ name: 'two', namespace: globalNamespace },
 				]),
 			})
 		);
-		expected.set('global.one', createCtx({ ...defaultCtx, namespace: 'global', kind: functionDeclarationKind }));
+		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
 		expected.set(
 			'global.two',
 			createCtx({
 				...defaultCtx,
-				namespace: 'global',
+				namespace: globalNamespace,
 				kind: functionDeclarationKind,
 				fnCalls: createFnCalls({}, [{ name: 'three', namespace: 'global.two' }]),
 			})
