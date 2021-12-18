@@ -2,6 +2,8 @@ import * as ts from 'typescript';
 import { ContextMap, Ctx } from '../types';
 import { createCtx, createLocal, createFnCall } from '../utils';
 
+// add a child pointer to the parent node
+
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
 	context.set('global', createCtx({ namespace: 'global', kind: 'global' } as Ctx));
@@ -45,16 +47,19 @@ function checkNode(
 		}
 
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
-		context.set(name, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
-		namespace = name;
+		const contextName = `${namespace}.${name}`;
+
+		context.set(contextName, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
+		namespace = contextName;
 	}
 
 	if (ts.isArrowFunction(node)) {
 		if (ts.isVariableDeclaration(parent)) {
 			const name = ts.getNameOfDeclaration(parent)?.getText() || '';
+			const contextName = `${namespace}.${name}`;
 
-			context.set(namespace, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
-			namespace = name;
+			context.set(contextName, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
+			namespace = contextName;
 		}
 	}
 

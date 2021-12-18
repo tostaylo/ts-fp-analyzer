@@ -7,7 +7,7 @@ describe('functions', () => {
 	test('detects function declaration', () => {
 		const expected = new Map();
 		expected.set('global', createCtx({ namespace: 'global', kind: global }));
-		expected.set('one', createCtx({ namespace: 'global', kind: functionDeclaration }));
+		expected.set('global.one', createCtx({ namespace: 'global', kind: functionDeclaration }));
 
 		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
 	});
@@ -36,7 +36,7 @@ describe('variables', () => {
 		);
 
 		expected.set(
-			'one',
+			'global.one',
 			createCtx({ namespace: 'global', kind: functionDeclaration, locals: { third: { name: 'third', type: '' } } })
 		);
 
@@ -52,16 +52,6 @@ const defaultCtx = {
 	mutatesOutsideScope: false,
 	fnCalls: {},
 };
-// remove this. adding a property to ctx type will break tests. The downside will be the tests will be more verbose
-function createFn(namespace, locals = [], mutatesInScope = false, mutatesOutsideScope = false, fnCalls = []) {
-	return {
-		namespace,
-		mutatesInScope,
-		mutatesOutsideScope,
-		locals: createLocals({}, locals),
-		fnCalls: createFnCalls({}, fnCalls),
-	};
-}
 
 describe('mutations', () => {
 	test('detects mutations', () => {
@@ -77,7 +67,7 @@ describe('mutations', () => {
 			})
 		);
 		expected.set(
-			'one',
+			'global.one',
 			createCtx(
 				createCtx({
 					...defaultCtx,
@@ -90,7 +80,7 @@ describe('mutations', () => {
 			)
 		);
 		expected.set(
-			'two',
+			'global.two',
 			createCtx(
 				createCtx({
 					...defaultCtx,
@@ -123,17 +113,17 @@ describe('hoisting', () => {
 				]),
 			})
 		);
-		expected.set('one', createCtx({ ...defaultCtx, namespace: 'global', kind: functionDeclaration }));
+		expected.set('global.one', createCtx({ ...defaultCtx, namespace: 'global', kind: functionDeclaration }));
 		expected.set(
-			'two',
+			'global.two',
 			createCtx({
 				...defaultCtx,
 				namespace: 'global',
 				kind: functionDeclaration,
-				fnCalls: createFnCalls({}, [['three', 'two']]),
+				fnCalls: createFnCalls({}, [['three', 'global.two']]),
 			})
 		);
-		expected.set('three', createCtx({ ...defaultCtx, namespace: 'two', kind: functionDeclaration }));
+		expected.set('global.two.three', createCtx({ ...defaultCtx, namespace: 'global.two', kind: functionDeclaration }));
 
 		expect(processFiles(['subjects/hoisting.ts'])).toEqual(expected);
 	});
