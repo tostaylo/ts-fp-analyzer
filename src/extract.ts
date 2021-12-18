@@ -1,6 +1,16 @@
 import * as ts from 'typescript';
 import { Ctx, ContextMap } from '../types';
 
+export function createLocal(name: string, type = ''): Ctx['locals'] {
+	return { [name]: { name, type } };
+}
+
+export function createLocals(locals: [[string, string]]): Ctx['locals'] {
+	return locals.reduce((acc, next) => {
+		return { ...acc, ...createLocal(next[0], next[1]) };
+	}, {});
+}
+
 export function createCtx({
 	namespace = '',
 	fnCalls = {},
@@ -13,7 +23,7 @@ export function createCtx({
 
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
-	context.set('global', createCtx({}));
+	context.set('global', createCtx({ namespace: 'global' }));
 
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
