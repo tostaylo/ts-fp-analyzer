@@ -1,4 +1,5 @@
-const { processFiles, createCtx, createLocals } = require('../bin/src/extract');
+const { processFiles } = require('../bin/src/extract');
+const { createCtx, createLocals } = require('../bin/utils/index');
 
 describe('functions', () => {
 	test('detects function declaration', () => {
