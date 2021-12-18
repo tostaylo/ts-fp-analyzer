@@ -5,7 +5,7 @@ one();
 two();
 
 function two() {
-	one();
+	three();
 
-	function one() {}
+	function three() {}
 }

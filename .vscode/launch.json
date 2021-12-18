@@ -11,9 +11,9 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "args": ["testfile.ts"],
+      "args": ["subjects/arrowFns.ts"],
       "console": "integratedTerminal",
-      "program": "${workspaceFolder}/bin/index.js",
+      "program": "${workspaceFolder}/bin/src/index.js",
       "preLaunchTask": "tsc: build - tsconfig.json",
       "outFiles": [
         "${workspaceFolder}/bin/**/*.js"

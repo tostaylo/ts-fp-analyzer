@@ -1,10 +1,10 @@
 import * as ts from 'typescript';
-import { ContextMap } from '../types';
+import { ContextMap, Ctx } from '../types';
 import { createCtx, createLocal, createFnCall } from '../utils';
 
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
-	context.set('global', createCtx({ namespace: 'global' }));
+	context.set('global', createCtx({ namespace: 'global', kind: 'global' } as Ctx));
 
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
@@ -18,15 +18,24 @@ export function processFiles(filenames: string[]): ContextMap {
 			checkNode(node, context, typeChecker);
 		});
 	});
-
+	// console.log(context);
 	return context;
 }
 
-function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeChecker, namespace = 'global') {
+//namespace needs to be an array to show heirarchy
+function checkNode(
+	node: ts.Node,
+	context: ContextMap,
+	typeChecker: ts.TypeChecker,
+	namespace = 'global',
+	parent: ts.Node = {} as ts.Node
+) {
 	const ctx = context.get(namespace);
 	if (!ctx) return;
-	// const syntaxKind = ts.SyntaxKind[node.kind];
-	// console.log({ syntaxKind, text: node.getText(), namespace });
+
+	// const currentKind = ts.SyntaxKind[node.kind];
+	// const parentKind = ts.SyntaxKind[parent.kind];
+	// console.log({ currentKind, parentKind, text: node.getText(), namespace });
 
 	if (ts.isFunctionDeclaration(node)) {
 		// Handle function hoisting
@@ -35,8 +44,18 @@ function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeCheck
 			ctx.fnCalls[namespace] = { ...calledFunction, namespace };
 		}
 
-		namespace = ts.getNameOfDeclaration(node)?.getText() || namespace;
-		context.set(namespace, createCtx({ namespace }));
+		const name = ts.getNameOfDeclaration(node)?.getText() || '';
+		context.set(name, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
+		namespace = name;
+	}
+
+	if (ts.isArrowFunction(node)) {
+		if (ts.isVariableDeclaration(parent)) {
+			const name = ts.getNameOfDeclaration(parent)?.getText() || '';
+
+			context.set(namespace, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
+			namespace = name;
+		}
 	}
 
 	if (ts.isVariableDeclaration(node)) {
@@ -45,8 +64,17 @@ function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeCheck
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const locals = ctx?.locals;
 		const local = createLocal(name, getType(typeName));
+		// node.forEachChild((child) => {
+		// 	const syntaxKind = ts.SyntaxKind[child.kind];
+
+		// });
 
 		context.set(namespace, { ...ctx, locals: { ...locals, ...local } });
+	}
+
+	if (ts.isFunctionExpression(node)) {
+		// need to detect hoisting here too?
+		// I would need to keep checking nodes recursively here
 	}
 
 	if (ts.isBinaryExpression(node)) {
@@ -77,7 +105,7 @@ function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeCheck
 	}
 
 	node.forEachChild((child) => {
-		checkNode(child, context, typeChecker, namespace);
+		checkNode(child, context, typeChecker, namespace, node);
 	});
 }
 

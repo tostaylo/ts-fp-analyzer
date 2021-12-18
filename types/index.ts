@@ -4,6 +4,7 @@ export type Ctx = {
 	mutatesInScope: boolean;
 	mutatesOutsideScope: boolean;
 	namespace: string;
+	kind: string;
 };
 
 export type ContextMap = Map<string, Ctx>;

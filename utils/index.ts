@@ -21,11 +21,12 @@ export function createLocals(currentLocals: Ctx['locals'], newLocals: [[string, 
 }
 
 export function createCtx({
-	namespace = '',
+	namespace,
+	kind,
 	fnCalls = {},
 	locals = {},
 	mutatesInScope = false,
 	mutatesOutsideScope = false,
-}): Ctx {
-	return { namespace, fnCalls, locals, mutatesInScope, mutatesOutsideScope };
+}: Ctx): Ctx {
+	return { namespace, kind, fnCalls, locals, mutatesInScope, mutatesOutsideScope };
 }
