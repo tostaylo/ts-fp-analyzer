@@ -63,7 +63,7 @@ describe('mutations', () => {
 				namespace: 'global',
 				kind: global,
 				mutatesInScope: true,
-				locals: createLocals({}, [['a']]),
+				locals: createLocals({}, [{ name: 'a', type: '' }]),
 			})
 		);
 		expected.set(
@@ -75,7 +75,7 @@ describe('mutations', () => {
 					kind: functionDeclaration,
 					mutatesInScope: true,
 					mutatesOutsideScope: true,
-					locals: createLocals({}, [['b']]),
+					locals: createLocals({}, [{ name: 'b', type: '' }]),
 				})
 			)
 		);
@@ -87,7 +87,7 @@ describe('mutations', () => {
 					namespace: 'global',
 					kind: functionDeclaration,
 					mutatesInScope: true,
-					locals: createLocals({}, [['a']]),
+					locals: createLocals({}, [{ name: 'a', type: '' }]),
 				})
 			)
 		);
@@ -108,8 +108,8 @@ describe('hoisting', () => {
 				namespace: 'global',
 				kind: global,
 				fnCalls: createFnCalls({}, [
-					['one', 'global'],
-					['two', 'global'],
+					{ name: 'one', namespace: 'global' },
+					{ name: 'two', namespace: 'global' },
 				]),
 			})
 		);
@@ -120,7 +120,7 @@ describe('hoisting', () => {
 				...defaultCtx,
 				namespace: 'global',
 				kind: functionDeclaration,
-				fnCalls: createFnCalls({}, [['three', 'global.two']]),
+				fnCalls: createFnCalls({}, [{ name: 'three', namespace: 'global.two' }]),
 			})
 		);
 		expected.set('global.two.three', createCtx({ ...defaultCtx, namespace: 'global.two', kind: functionDeclaration }));

@@ -68,7 +68,7 @@ function checkNode(
 		const typeName = typeChecker.typeToString(type, node);
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const locals = ctx?.locals;
-		const local = createLocal(name, getType(typeName));
+		const local = createLocal({ name, type: getType(typeName) });
 		// node.forEachChild((child) => {
 		// 	const syntaxKind = ts.SyntaxKind[child.kind];
 
@@ -104,7 +104,7 @@ function checkNode(
 	if (ts.isCallExpression(node)) {
 		const name = node.expression.getText();
 		const fnCalls = ctx?.fnCalls;
-		const fnCall = createFnCall(name, namespace);
+		const fnCall = createFnCall({ name, namespace });
 
 		context.set(namespace, { ...ctx, fnCalls: { ...fnCalls, ...fnCall } });
 	}

@@ -1,22 +1,25 @@
 import { Ctx } from '../types';
 
-export function createFnCall(name: string, namespace: string): Ctx['fnCalls'] {
+type FnCall = { name: string; namespace: string };
+type Local = { name: string; type: string };
+
+export function createFnCall({ name, namespace }: FnCall): Ctx['fnCalls'] {
 	return { [name]: { name, namespace } };
 }
 
-export function createFnCalls(currentFnCalls: Ctx['fnCalls'], newFnCalls: [[string, string]]): Ctx['fnCalls'] {
-	return newFnCalls.reduce((acc, next) => {
-		return { ...acc, ...createFnCall(next[0], next[1]) };
+export function createFnCalls(currentFnCalls: Ctx['fnCalls'], newFnCalls: FnCall[]): Ctx['fnCalls'] {
+	return newFnCalls.reduce((acc, { name, namespace }) => {
+		return { ...acc, ...createFnCall({ name, namespace }) };
 	}, currentFnCalls);
 }
 
-export function createLocal(name: string, type = ''): Ctx['locals'] {
+export function createLocal({ name, type }: Local): Ctx['locals'] {
 	return { [name]: { name, type } };
 }
 
-export function createLocals(currentLocals: Ctx['locals'], newLocals: [[string, string]]): Ctx['locals'] {
-	return newLocals.reduce((acc, next) => {
-		return { ...acc, ...createLocal(next[0], next[1]) };
+export function createLocals(currentLocals: Ctx['locals'], newLocals: Local[]): Ctx['locals'] {
+	return newLocals.reduce((acc, { name, type }) => {
+		return { ...acc, ...createLocal({ name, type }) };
 	}, currentLocals);
 }
 
