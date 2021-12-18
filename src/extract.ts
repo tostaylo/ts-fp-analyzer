@@ -1,12 +1,13 @@
 import * as ts from 'typescript';
 import { ContextMap, Ctx } from '../types';
-import { createCtx, createLocal, createFnCall } from '../utils';
+import { createLocal, createFnCall, addToCtx, setNewContext } from '../utils';
 
 // add a child pointer to the parent node
 
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
-	context.set('global', createCtx({ namespace: 'global', kind: 'global' } as Ctx));
+
+	setNewContext(context, 'global', { namespace: 'global', kind: 'global' } as Ctx);
 
 	filenames.forEach((filename) => {
 		const program = ts.createProgram([filename], {});
@@ -49,7 +50,7 @@ function checkNode(
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const contextName = `${namespace}.${name}`;
 
-		context.set(contextName, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
+		setNewContext(context, contextName, { namespace, kind: ts.SyntaxKind[node.kind] } as Ctx);
 		namespace = contextName;
 	}
 
@@ -58,7 +59,7 @@ function checkNode(
 			const name = ts.getNameOfDeclaration(parent)?.getText() || '';
 			const contextName = `${namespace}.${name}`;
 
-			context.set(contextName, createCtx({ namespace, kind: ts.SyntaxKind[node.kind] } as Ctx));
+			setNewContext(context, contextName, { namespace, kind: ts.SyntaxKind[node.kind] } as Ctx);
 			namespace = contextName;
 		}
 	}
@@ -74,7 +75,7 @@ function checkNode(
 
 		// });
 
-		context.set(namespace, { ...ctx, locals: { ...locals, ...local } });
+		addToCtx(context, namespace, ctx, { locals: { ...locals, ...local } });
 	}
 
 	if (ts.isFunctionExpression(node)) {
@@ -87,9 +88,9 @@ function checkNode(
 		const isLocal = ctx?.locals[name];
 
 		if (isLocal) {
-			context.set(namespace, { ...ctx, mutatesInScope: true });
+			addToCtx(context, namespace, ctx, { mutatesInScope: true });
 		} else {
-			context.set(namespace, { ...ctx, mutatesOutsideScope: true });
+			addToCtx(context, namespace, ctx, { mutatesOutsideScope: true });
 		}
 		// switch (node.getFirstToken().kind) {
 		// 	case ts.SyntaxKind.ElementAccessExpression: {
@@ -106,7 +107,7 @@ function checkNode(
 		const fnCalls = ctx?.fnCalls;
 		const fnCall = createFnCall({ name, namespace });
 
-		context.set(namespace, { ...ctx, fnCalls: { ...fnCalls, ...fnCall } });
+		addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
 	}
 
 	node.forEachChild((child) => {

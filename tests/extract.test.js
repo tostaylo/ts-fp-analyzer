@@ -17,7 +17,7 @@ describe('functions', () => {
 });
 
 describe('arrow functions', () => {
-	xtest('given a single arrow function , should detect arrow function declaration', () => {
+	xtest('given a single arrow function, should detect arrow function declaration', () => {
 		const expected = new Map();
 		// expected.set(globalNamespace, createCtx({ namespace: globalNamespace }));
 		// expected.set('one', createCtx({ namespace: 'one' }));

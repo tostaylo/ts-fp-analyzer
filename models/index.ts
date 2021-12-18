@@ -7,4 +7,5 @@ export const defaultCtx: Ctx = {
 	mutatesInScope: false,
 	mutatesOutsideScope: false,
 	fnCalls: {},
+	childFns: [],
 };
