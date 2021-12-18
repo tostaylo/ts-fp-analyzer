@@ -1,6 +1,6 @@
 import * as ts from 'typescript';
 import { ContextMap } from '../types';
-import { createCtx, createLocal } from '../utils';
+import { createCtx, createLocal, createFnCall } from '../utils';
 
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
@@ -70,7 +70,10 @@ function checkNode(node: ts.Node, context: ContextMap, typeChecker: ts.TypeCheck
 
 	if (ts.isCallExpression(node)) {
 		const name = node.expression.getText();
-		context.set(namespace, { ...ctx, fnCalls: { [name]: { name, namespace } } });
+		const fnCalls = ctx?.fnCalls;
+		const fnCall = createFnCall(name, namespace);
+
+		context.set(namespace, { ...ctx, fnCalls: { ...fnCalls, ...fnCall } });
 	}
 
 	node.forEachChild((child) => {
