@@ -50,7 +50,11 @@ function checkNode(
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const contextName = `${namespace}.${name}`;
 
+		const childFns = [...ctx.childFns];
+		childFns.push(name);
+
 		setNewContext(context, contextName, { namespace, kind: ts.SyntaxKind[node.kind] } as Ctx);
+		addToCtx(context, namespace, ctx, { childFns });
 		namespace = contextName;
 	}
 
@@ -59,7 +63,11 @@ function checkNode(
 			const name = ts.getNameOfDeclaration(parent)?.getText() || '';
 			const contextName = `${namespace}.${name}`;
 
+			const childFns = [...ctx.childFns];
+			childFns.push(name);
+
 			setNewContext(context, contextName, { namespace, kind: ts.SyntaxKind[node.kind] } as Ctx);
+			addToCtx(context, namespace, ctx, { childFns });
 			namespace = contextName;
 		}
 	}

@@ -9,7 +9,10 @@ const globalNamespace = 'global';
 describe('functions', () => {
 	test('given a single function declaration, should detect function declaration', () => {
 		const expected = new Map();
-		expected.set(globalNamespace, createCtx({ ...defaultCtx, namespace: globalNamespace, kind: globalKind }));
+		expected.set(
+			globalNamespace,
+			createCtx({ ...defaultCtx, namespace: globalNamespace, kind: globalKind, childFns: ['one'] })
+		);
 		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
 
 		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
@@ -36,6 +39,7 @@ describe('variables', () => {
 				namespace: globalNamespace,
 				kind: globalNamespace,
 				locals: { first: { name: 'first', type: '"first"' }, second: { name: 'second', type: 'string' } },
+				childFns: ['one'],
 			})
 		);
 
@@ -64,6 +68,7 @@ describe('mutations', () => {
 				kind: globalKind,
 				mutatesInScope: true,
 				locals: createLocals({}, [{ name: 'a', type: 'number' }]),
+				childFns: ['one', 'two'],
 			})
 		);
 		expected.set(
@@ -109,6 +114,7 @@ describe('hoisting', () => {
 					{ name: 'one', namespace: globalNamespace },
 					{ name: 'two', namespace: globalNamespace },
 				]),
+				childFns: ['one', 'two'],
 			})
 		);
 		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
@@ -119,6 +125,7 @@ describe('hoisting', () => {
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
 				fnCalls: createFnCalls({}, [{ name: 'three', namespace: 'global.two' }]),
+				childFns: ['three'],
 			})
 		);
 		expected.set(
