@@ -3,6 +3,7 @@ const { createCtx, createLocals, createFnCalls } = require('../bin/utils/index')
 const { defaultCtx } = require('../bin/models/index');
 
 const functionDeclarationKind = 'FunctionDeclaration';
+const arrowFunctionKind = 'ArrowFunction';
 const globalKind = 'global';
 const globalNamespace = 'global';
 
@@ -20,10 +21,19 @@ describe('functions', () => {
 });
 
 describe('arrow functions', () => {
-	xtest('given a single arrow function, should detect arrow function declaration', () => {
+	test('given a single arrow function, should detect arrow function declaration', () => {
 		const expected = new Map();
-		// expected.set(globalNamespace, createCtx({ namespace: globalNamespace }));
-		// expected.set('one', createCtx({ namespace: 'one' }));
+		expected.set(
+			globalNamespace,
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: globalKind,
+				childFns: ['one'],
+				locals: createLocals({}, [{ name: 'one', type: '() => void' }]),
+			})
+		);
+		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: arrowFunctionKind }));
 
 		expect(processFiles(['subjects/arrowFns.ts'])).toEqual(expected);
 	});

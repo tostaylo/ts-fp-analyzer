@@ -1,2 +1,2 @@
-const a = () => {};
-// const b = [].map(() => {});
+export default {};
+const one = () => {};
