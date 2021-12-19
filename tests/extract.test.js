@@ -48,7 +48,10 @@ describe('variables', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: globalNamespace,
-				locals: { first: { name: 'first', type: '"first"' }, second: { name: 'second', type: 'string' } },
+				locals: createLocals({}, [
+					{ name: 'first', type: '"first"' },
+					{ name: 'second', type: 'string' },
+				]),
 				childFns: ['one'],
 			})
 		);
@@ -59,7 +62,7 @@ describe('variables', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
-				locals: { third: { name: 'third', type: '"third"' } },
+				locals: createLocals({}, [{ name: 'third', type: '"third"' }]),
 			})
 		);
 
