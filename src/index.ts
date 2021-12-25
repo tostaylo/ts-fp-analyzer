@@ -1,6 +1,7 @@
 import * as open from 'open';
 import { processFiles } from './extract';
 import * as express from 'express';
+import * as fs from 'fs';
 import html from './html';
 
 const app = express();
@@ -8,14 +9,12 @@ const port = 3000;
 
 app.use(express.static('public'));
 
-const myArgs = process.argv.slice(2);
+app.get('/hoisting', (req, res) => {
+	const data = processFiles([`subjects/hoisting.ts`]);
+	const json = JSON.stringify(Object.fromEntries(data));
 
-const files: string[] = myArgs.filter((file) => file.endsWith('ts'));
-
-processFiles(files);
-
-app.get('/', (req, res) => {
-	res.send(html);
+	fs.writeFileSync('public/graph-data.json', json);
+	res.send(html());
 });
 
 app.listen(port, () => {

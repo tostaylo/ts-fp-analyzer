@@ -113,7 +113,7 @@ function checkNode(
 	if (ts.isCallExpression(node)) {
 		const name = node.expression.getText();
 		const fnCalls = ctx?.fnCalls;
-		const fnCall = createFnCall({ name, namespace });
+		const fnCall = createFnCall({ name: `${namespace}.${name}`, namespace });
 
 		addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
 	}
