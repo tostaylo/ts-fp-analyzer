@@ -1,33 +1,27 @@
 import * as open from 'open';
 import { processFiles } from './extract';
-import Fastify from 'fastify';
-import * as fs from 'fs';
+import * as express from 'express';
+import html from './html';
 
-const fastify = Fastify({
-	logger: true,
-});
+const app = express();
+const port = 3000;
+
+app.use(express.static('public'));
+
 const myArgs = process.argv.slice(2);
 
 const files: string[] = myArgs.filter((file) => file.endsWith('ts'));
 
 processFiles(files);
 
-(async function () {
-	await open('http://localhost:3000');
-})();
-
-fastify.get('/', async (request, reply) => {
-	const stream = fs.createReadStream('public/index.html');
-	return reply.type('text/html').send(stream);
+app.get('/', (req, res) => {
+	res.send(html);
 });
 
-const start = async () => {
-	try {
-		await fastify.listen(3000);
-	} catch (err) {
-		fastify.log.error(err);
-		process.exit(1);
-	}
-};
+app.listen(port, () => {
+	console.log(`Example app listening at http://localhost:${port}`);
+});
 
-start();
+// (async function () {
+// 	await open('http://localhost:3000');
+// })();
