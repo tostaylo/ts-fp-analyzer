@@ -1,7 +1,7 @@
 import { ContextMap, Ctx, FnCall, Local } from '../types';
 
 export function createFnCall({ name, namespace }: FnCall): Ctx['fnCalls'] {
-	return { [name]: { name, namespace } };
+	return { [`${namespace}.${name}`]: { name, namespace } };
 }
 
 export function createFnCalls(currentFnCalls: Ctx['fnCalls'], newFnCalls: FnCall[]): Ctx['fnCalls'] {
