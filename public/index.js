@@ -1,5 +1,5 @@
 (async function () {
-	const { mermaidAPI } = mermaid;
+	const { mermaidAPI } = window.mermaid;
 
 	const insertGraphs = initialize(mermaidAPI);
 

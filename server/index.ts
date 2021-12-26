@@ -1,5 +1,5 @@
 import * as open from 'open';
-import { processFiles } from './extract';
+import { processFiles } from '../src/extract';
 import * as express from 'express';
 import * as fs from 'fs';
 import html from './html';
@@ -10,7 +10,6 @@ const port = 3000;
 app.use(express.static('public'));
 
 app.get('/graph/:file', (req, res) => {
-	console.log(req.params);
 	const data = processFiles([`subjects/${req.params.file}.ts`]);
 	const json = JSON.stringify(Object.fromEntries(data));
 

@@ -7,7 +7,7 @@
 		"test": "tsc && jest",
 		"lint": "eslint . --ext .ts",
 		"prepare": "husky install",
-		"start": "tsc && node bin/src/index.js subjects/functions.ts"
+		"start:server": "tsc && node bin/server/index.js"
 	},
 	"author": "tostaylo",
 	"license": "ISC",
