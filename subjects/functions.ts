@@ -2,3 +2,7 @@
 export {};
 
 function one() {}
+
+const two = function () {};
+
+const three = () => {};

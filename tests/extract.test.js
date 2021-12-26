@@ -3,25 +3,13 @@ const { createCtx, createLocals, createFnCalls } = require('../bin/utils/index')
 const { defaultCtx } = require('../bin/models/index');
 
 const functionDeclarationKind = 'FunctionDeclaration';
+const functionExpressionKind = 'FunctionExpression';
 const arrowFunctionKind = 'ArrowFunction';
 const globalKind = 'global';
 const globalNamespace = 'global';
 
 describe('functions', () => {
-	test('given a single function declaration, should detect function declaration', () => {
-		const expected = new Map();
-		expected.set(
-			globalNamespace,
-			createCtx({ ...defaultCtx, namespace: globalNamespace, kind: globalKind, childFns: ['one'] })
-		);
-		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
-
-		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
-	});
-});
-
-describe('arrow functions', () => {
-	test('given a single arrow function, should detect arrow function declaration', () => {
+	test('given a single function declaration and function expression, should detect function declaration ', () => {
 		const expected = new Map();
 		expected.set(
 			globalNamespace,
@@ -29,13 +17,25 @@ describe('arrow functions', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: globalKind,
-				childFns: ['one'],
-				locals: createLocals({}, [{ name: 'one', type: '() => void' }]),
+				childFns: ['one', 'two', 'three'],
+				locals: createLocals({}, [
+					{ name: 'two', type: '() => void' },
+					{ name: 'three', type: '() => void' },
+				]),
 			})
 		);
-		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: arrowFunctionKind }));
+		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
+		expected.set(
+			'global.two',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionExpressionKind,
+			})
+		);
+		expected.set('global.three', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: arrowFunctionKind }));
 
-		expect(processFiles(['subjects/arrowFns.ts'])).toEqual(expected);
+		expect(processFiles(['subjects/functions.ts'])).toEqual(expected);
 	});
 });
 

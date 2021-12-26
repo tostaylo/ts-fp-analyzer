@@ -58,7 +58,7 @@ function checkNode(
 		namespace = contextName;
 	}
 
-	if (ts.isArrowFunction(node)) {
+	if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
 		if (ts.isVariableDeclaration(parent)) {
 			const name = ts.getNameOfDeclaration(parent)?.getText() || '';
 			const contextName = `${namespace}.${name}`;
@@ -78,17 +78,8 @@ function checkNode(
 		const name = ts.getNameOfDeclaration(node)?.getText() || '';
 		const locals = ctx?.locals;
 		const local = createLocal({ name, type: typeName });
-		// node.forEachChild((child) => {
-		// 	const syntaxKind = ts.SyntaxKind[child.kind];
-
-		// });
 
 		addToCtx(context, namespace, ctx, { locals: { ...locals, ...local } });
-	}
-
-	if (ts.isFunctionExpression(node)) {
-		// need to detect hoisting here too?
-		// I would need to keep checking nodes recursively here
 	}
 
 	if (ts.isBinaryExpression(node)) {
@@ -100,14 +91,6 @@ function checkNode(
 		} else {
 			addToCtx(context, namespace, ctx, { mutatesOutsideScope: true });
 		}
-		// switch (node.getFirstToken().kind) {
-		// 	case ts.SyntaxKind.ElementAccessExpression: {
-		// 	}
-		// 	case ts.SyntaxKind.PropertyAccessExpression: {
-		// 	}
-		// 	case ts.SyntaxKind.Identifier: {
-		// 	}
-		// }
 	}
 
 	if (ts.isCallExpression(node)) {
