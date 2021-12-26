@@ -3,7 +3,7 @@
 
 	const insertGraphs = initialize(mermaidAPI);
 
-	const data = await (await fetch('./graph-data.json')).json();
+	const data = await (await fetch('/graph-data.json')).json();
 
 	mermaidAPI.render('mermaid', createGraphDefinition(data), insertGraphs);
 

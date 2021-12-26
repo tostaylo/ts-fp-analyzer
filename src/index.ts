@@ -9,8 +9,9 @@ const port = 3000;
 
 app.use(express.static('public'));
 
-app.get('/hoisting', (req, res) => {
-	const data = processFiles([`subjects/hoisting.ts`]);
+app.get('/graph/:file', (req, res) => {
+	console.log(req.params);
+	const data = processFiles([`subjects/${req.params.file}.ts`]);
 	const json = JSON.stringify(Object.fromEntries(data));
 
 	fs.writeFileSync('public/graph-data.json', json);
