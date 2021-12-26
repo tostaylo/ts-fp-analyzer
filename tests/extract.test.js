@@ -9,7 +9,7 @@ const globalKind = 'global';
 const globalNamespace = 'global';
 
 describe('functions', () => {
-	test('given a single function declaration and function expression, should detect function declaration ', () => {
+	test('given a function declaration, function expression, and arrow function, should detect', () => {
 		const expected = new Map();
 		expected.set(
 			globalNamespace,
@@ -147,5 +147,26 @@ describe('hoisting', () => {
 		);
 
 		expect(processFiles(['subjects/hoisting.ts'])).toEqual(expected);
+	});
+});
+
+describe('returns', () => {
+	test('given a return should detect', () => {
+		const expected = new Map();
+		expected.set(
+			globalNamespace,
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: globalKind,
+				childFns: ['one'],
+			})
+		);
+		expected.set(
+			'global.one',
+			createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind, returns: ['1'] })
+		);
+
+		expect(processFiles(['subjects/returns.ts'])).toEqual(expected);
 	});
 });

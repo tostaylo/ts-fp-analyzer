@@ -30,8 +30,9 @@ export function createCtx({
 	mutatesInScope = false,
 	mutatesOutsideScope = false,
 	childFns = [],
+	returns = [],
 }: Ctx): Ctx {
-	return { namespace, kind, fnCalls, locals, mutatesInScope, mutatesOutsideScope, childFns };
+	return { namespace, kind, fnCalls, locals, mutatesInScope, mutatesOutsideScope, childFns, returns };
 }
 
 export function setNewContext(context: ContextMap, contextName: string, ctx: Ctx) {

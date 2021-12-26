@@ -9,6 +9,7 @@ export type Ctx = {
 	namespace: string;
 	kind: string;
 	childFns: string[];
+	returns: string[];
 };
 
 export type ContextMap = Map<string, Ctx>;

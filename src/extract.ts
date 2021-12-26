@@ -101,6 +101,13 @@ function checkNode(
 		addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
 	}
 
+	if (ts.isReturnStatement(node)) {
+		const returns = ctx?.returns;
+		returns.push(node.expression?.getText() || 'no expression text');
+
+		addToCtx(context, namespace, ctx, { returns });
+	}
+
 	node.forEachChild((child) => {
 		checkNode(child, context, typeChecker, namespace, node);
 	});

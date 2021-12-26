@@ -8,4 +8,5 @@ export const defaultCtx: Ctx = {
 	mutatesOutsideScope: false,
 	fnCalls: {},
 	childFns: [],
+	returns: [],
 };
