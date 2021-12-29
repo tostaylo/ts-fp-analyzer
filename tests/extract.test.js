@@ -113,9 +113,50 @@ describe('mutations', () => {
 		expect(processFiles(['subjects/mutations/numbers.ts'])).toEqual(expected);
 	});
 
-	// test('should detect object mutations', () => {
-	// 	expect(processFiles(['subjects/mutations/objects.ts'])).toEqual(null);
-	// });
+	test('should detect param mutations', () => {
+		const expected = new Map();
+		expected.set(
+			globalNamespace,
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: globalKind,
+				childFns: ['one', 'two', 'three'],
+			})
+		);
+		expected.set(
+			'global.one',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				mutatesOutsideScope: true,
+				params: createParams({}, [{ name: 'a', type: 'any' }]),
+			})
+		);
+		expected.set(
+			'global.two',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				mutatesOutsideScope: true,
+				params: createParams({}, [{ name: 'b', type: 'any' }]),
+			})
+		);
+		expected.set(
+			'global.three',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				mutatesInScope: true,
+				params: createParams({}, [{ name: 'c', type: 'any' }]),
+			})
+		);
+
+		expect(processFiles(['subjects/mutations/params.ts'])).toEqual(expected);
+	});
 });
 
 describe('hoisting', () => {

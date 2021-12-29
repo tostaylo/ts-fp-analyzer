@@ -83,31 +83,45 @@ function checkNode(
 	}
 
 	if (ts.isBinaryExpression(node)) {
-		console.log(ts.SyntaxKind[node.getFirstToken()?.kind as any], 'first token kind');
-		console.log(ts.SyntaxKind[node.getChildAt(0).kind], 'child kind');
-		const name = node.getFirstToken()?.getText() as string;
+		const child = node.getChildAt(0);
+		const firstToken = node.getFirstToken();
+		const name = firstToken?.getText() as string;
 		const isLocal = ctx?.locals[name];
+		const isParam = ctx?.params[name];
 
-		if (isLocal) {
+		if (
+			(isParam && child.kind === ts.SyntaxKind.PropertyAccessExpression) ||
+			child.kind === ts.SyntaxKind.ElementAccessExpression
+		) {
+			// handle object and array assignment from params - mutates from a outer scope
+			// a.hi = "bye"  b[0] = 2
+			addToCtx(context, namespace, ctx, { mutatesOutsideScope: true });
+		} else if (isParam) {
+			// handle primitives variable reassignment from params like strings or numbers
+			// a = 2
+			addToCtx(context, namespace, ctx, { mutatesInScope: true });
+		} else if (isLocal) {
 			addToCtx(context, namespace, ctx, { mutatesInScope: true });
 		} else {
 			addToCtx(context, namespace, ctx, { mutatesOutsideScope: true });
 		}
 	}
 
+	// How to detect reads from outside scope??????
+	// Do I care?
+	//
+
+	// How to detect actions vs calculations
+	// An action has side effects
+	// A calculation does not cause side effects directly or through calling functions, must not read from out of scope???, and must a return a value
+
 	// if (ts.isPropertyAccessExpression(node)) {
 	// 	console.log({ node, parent, parentKind: ts.SyntaxKind[parent.kind] });
 	// }
 
-	// isParam that we are mutating?
-	// can I get param type when I collect Params? if param is object and we are mutating then we are //////////mutating a global variable. Else if number or string then we are reassigning the parameter
-	// Probably can't do type but need to know if firstchild is propertyaccess expression
-
-	// also need to detect mutating array. either by elementAccessExpression or by mutating arraymethods which would be maybe last Identifier of one of the below. and element is arraytype but the mutating array method will not occur in a binaryexpression
-	//    CallExpression
-	// PropertyAccessExpression
-	// Identifier
-	// Identifier
+	// if (ts.isElementAccessExpression(node)) {
+	// 	console.log({ node, parent, parentKind: ts.SyntaxKind[parent.kind] });
+	// }
 
 	if (ts.isParameter(node)) {
 		const type = typeChecker.getTypeAtLocation(node);
