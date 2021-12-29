@@ -1,4 +1,4 @@
-import { ContextMap, Ctx, FnCall, Local } from '../types';
+import { ContextMap, Ctx, FnCall, Local, Param } from '../types';
 
 export function createFnCall({ name, namespace }: FnCall): Ctx['fnCalls'] {
 	return { [`${namespace}.${name}`]: { name, namespace } };
@@ -20,6 +20,16 @@ export function createLocals(currentLocals: Ctx['locals'], newLocals: Local[]): 
 	}, currentLocals);
 }
 
+export function createParam({ name, type }: Param): Ctx['params'] {
+	return { [name]: { name, type } };
+}
+
+export function createParams(currentLocals: Ctx['params'], newLocals: Param[]): Ctx['params'] {
+	return newLocals.reduce((acc, { name, type }) => {
+		return { ...acc, ...createParam({ name, type }) };
+	}, currentLocals);
+}
+
 export function createCtx({
 	// don't provide defaults because these values are required
 	namespace,
@@ -27,12 +37,13 @@ export function createCtx({
 	// optional
 	fnCalls = {},
 	locals = {},
+	params = {},
 	mutatesInScope = false,
 	mutatesOutsideScope = false,
 	childFns = [],
 	returns = [],
 }: Ctx): Ctx {
-	return { namespace, kind, fnCalls, locals, mutatesInScope, mutatesOutsideScope, childFns, returns };
+	return { namespace, kind, fnCalls, locals, params, mutatesInScope, mutatesOutsideScope, childFns, returns };
 }
 
 export function setNewContext(context: ContextMap, contextName: string, ctx: Ctx) {

@@ -1,5 +1,5 @@
 const { processFiles } = require('../bin/src/extract');
-const { createCtx, createLocals, createFnCalls } = require('../bin/utils/index');
+const { createCtx, createLocals, createFnCalls, createParams } = require('../bin/utils/index');
 const { defaultCtx } = require('../bin/models/index');
 
 const functionDeclarationKind = 'FunctionDeclaration';
@@ -110,8 +110,12 @@ describe('mutations', () => {
 			)
 		);
 
-		expect(processFiles(['subjects/mutations.ts'])).toEqual(expected);
+		expect(processFiles(['subjects/mutations/numbers.ts'])).toEqual(expected);
 	});
+
+	// test('should detect object mutations', () => {
+	// 	expect(processFiles(['subjects/mutations/objects.ts'])).toEqual(null);
+	// });
 });
 
 describe('hoisting', () => {
@@ -168,5 +172,35 @@ describe('returns', () => {
 		);
 
 		expect(processFiles(['subjects/returns.ts'])).toEqual(expected);
+	});
+
+	describe('params', () => {
+		test('given a param should detect', () => {
+			const expected = new Map();
+			expected.set(
+				globalNamespace,
+				createCtx({
+					...defaultCtx,
+					namespace: globalNamespace,
+					kind: globalKind,
+					childFns: ['one'],
+				})
+			);
+			expected.set(
+				'global.one',
+				createCtx({
+					...defaultCtx,
+					namespace: globalNamespace,
+					kind: functionDeclarationKind,
+					returns: ['{ a, b }'],
+					params: createParams({}, [
+						{ name: 'a', type: 'string' },
+						{ name: 'b', type: 'string' },
+					]),
+				})
+			);
+
+			expect(processFiles(['subjects/params.ts'])).toEqual(expected);
+		});
 	});
 });
