@@ -8,6 +8,7 @@ export type Ctx = {
 	params: { [key: string]: Param };
 	mutatesInScope: boolean;
 	mutatesOutsideScope: boolean;
+	accesses: { inScope: boolean; outsideScope: boolean };
 	namespace: string;
 	kind: string;
 	childFns: string[];

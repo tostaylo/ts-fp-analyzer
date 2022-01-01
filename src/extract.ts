@@ -36,10 +36,6 @@ function checkNode(
 	const ctx = context.get(namespace);
 	if (!ctx) return;
 
-	// const currentKind = ts.SyntaxKind[node.kind];
-	// const parentKind = ts.SyntaxKind[parent.kind];
-	// console.log({ currentKind, parentKind, text: node.getText(), namespace });
-
 	if (ts.isFunctionDeclaration(node)) {
 		// Handle function hoisting
 		const calledFunction = ctx.fnCalls[namespace];
@@ -47,7 +43,7 @@ function checkNode(
 			ctx.fnCalls[namespace] = { ...calledFunction, namespace };
 		}
 
-		const name = ts.getNameOfDeclaration(node)?.getText() || '';
+		const name = ts.getNameOfDeclaration(node)?.getText() || 'no-name-declaration';
 		const contextName = `${namespace}.${name}`;
 
 		const childFns = [...ctx.childFns];
@@ -60,7 +56,7 @@ function checkNode(
 
 	if (ts.isArrowFunction(node) || ts.isFunctionExpression(node)) {
 		if (ts.isVariableDeclaration(parent)) {
-			const name = ts.getNameOfDeclaration(parent)?.getText() || '';
+			const name = ts.getNameOfDeclaration(parent)?.getText() || 'no-name-declaration';
 			const contextName = `${namespace}.${name}`;
 
 			const childFns = [...ctx.childFns];
@@ -107,21 +103,32 @@ function checkNode(
 		}
 	}
 
-	// How to detect reads from outside scope??????
-	// Do I care?
-	//
-
 	// How to detect actions vs calculations
 	// An action has side effects
 	// A calculation does not cause side effects directly or through calling functions, must not read from out of scope???, and must a return a value
 
-	// if (ts.isPropertyAccessExpression(node)) {
-	// 	console.log({ node, parent, parentKind: ts.SyntaxKind[parent.kind] });
-	// }
+	if (ts.isPropertyAccessExpression(node)) {
+		const symbol = typeChecker.getSymbolAtLocation(node);
+		const declaration = symbol?.valueDeclaration;
+		const declarationKind = declaration?.kind;
+		const firstToken = node.getFirstToken();
+		const name = firstToken?.getText() as string;
+		const isLocal = ctx?.locals[name];
+		const isParam = ctx?.params[name];
 
-	// if (ts.isElementAccessExpression(node)) {
-	// 	console.log({ node, parent, parentKind: ts.SyntaxKind[parent.kind] });
-	// }
+		if (declarationKind === ts.SyntaxKind.MethodSignature) {
+			// here is where I write a function to determine what is a mutator on array and objects
+			// mutates{inScope: true or false, outsideScope: true or false}
+			console.log(name);
+		}
+		if (isParam) {
+			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, outsideScope: true } });
+		} else if (isLocal) {
+			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, inScope: true } });
+		} else {
+			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, outsideScope: true } });
+		}
+	}
 
 	if (ts.isParameter(node)) {
 		const type = typeChecker.getTypeAtLocation(node);
@@ -141,6 +148,7 @@ function checkNode(
 		addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
 	}
 
+	// TODO: Handle returns from arrow functions
 	if (ts.isReturnStatement(node)) {
 		const returns = ctx?.returns;
 		returns.push(node.expression?.getText() || 'no expression text');

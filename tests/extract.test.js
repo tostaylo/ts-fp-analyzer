@@ -159,7 +159,7 @@ describe('mutations', () => {
 	});
 });
 
-describe('hoisting', () => {
+describe('call expressions', () => {
 	test('given a function executed before declaration, it detects hoisted functions and binds the correct namespace', () => {
 		const expected = new Map();
 		expected.set(
@@ -191,7 +191,13 @@ describe('hoisting', () => {
 			createCtx({ ...defaultCtx, namespace: 'global.two', kind: functionDeclarationKind })
 		);
 
-		expect(processFiles(['subjects/hoisting.ts'])).toEqual(expected);
+		expect(processFiles(['subjects/calls/hoisting.ts'])).toEqual(expected);
+	});
+
+	test.only('given a call expression should detect', () => {
+		const expected = new Map();
+
+		expect(processFiles(['subjects/calls/calls.ts'])).toEqual(expected);
 	});
 });
 
