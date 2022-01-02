@@ -82,6 +82,7 @@ describe('mutations', () => {
 				mutatesInScope: true,
 				locals: createLocals({}, [{ name: 'a', type: 'number' }]),
 				childFns: ['one', 'two'],
+				accesses: { inScope: true, outsideScope: false },
 			})
 		);
 		expected.set(
@@ -94,6 +95,7 @@ describe('mutations', () => {
 					mutatesInScope: true,
 					mutatesOutsideScope: true,
 					locals: createLocals({}, [{ name: 'b', type: 'number' }]),
+					accesses: { inScope: true, outsideScope: true },
 				})
 			)
 		);
@@ -106,6 +108,7 @@ describe('mutations', () => {
 					kind: functionDeclarationKind,
 					mutatesInScope: true,
 					locals: createLocals({}, [{ name: 'a', type: 'number' }]),
+					accesses: { inScope: true, outsideScope: false },
 				})
 			)
 		);
@@ -132,6 +135,7 @@ describe('mutations', () => {
 				kind: functionDeclarationKind,
 				mutatesOutsideScope: true,
 				params: createParams({}, [{ name: 'a', type: 'any' }]),
+				accesses: { inScope: false, outsideScope: true },
 			})
 		);
 		expected.set(
@@ -142,6 +146,7 @@ describe('mutations', () => {
 				kind: functionDeclarationKind,
 				mutatesOutsideScope: true,
 				params: createParams({}, [{ name: 'b', type: 'any' }]),
+				accesses: { inScope: false, outsideScope: true },
 			})
 		);
 		expected.set(
@@ -152,6 +157,7 @@ describe('mutations', () => {
 				kind: functionDeclarationKind,
 				mutatesInScope: true,
 				params: createParams({}, [{ name: 'c', type: 'any' }]),
+				accesses: { inScope: true, outsideScope: false },
 			})
 		);
 
@@ -194,10 +200,41 @@ describe('call expressions', () => {
 		expect(processFiles(['subjects/calls/hoisting.ts'])).toEqual(expected);
 	});
 
-	test.only('given a call expression should detect', () => {
+	test('given property access should detect inScope or outsideScope', () => {
 		const expected = new Map();
 
-		expect(processFiles(['subjects/calls/calls.ts'])).toEqual(expected);
+		expected.set(
+			globalNamespace,
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: globalKind,
+				locals: createLocals({}, [{ name: 'a', type: '{ b: number; }' }]),
+				childFns: ['one'],
+			})
+		);
+		expected.set(
+			'global.one',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				childFns: ['two'],
+				accesses: { inScope: false, outsideScope: true },
+			})
+		);
+		expected.set(
+			'global.one.two',
+			createCtx({
+				...defaultCtx,
+				namespace: `${globalNamespace}.one`,
+				kind: functionDeclarationKind,
+				locals: createLocals({}, [{ name: 'a', type: '{ b: number; }' }]),
+				accesses: { inScope: true, outsideScope: false },
+			})
+		);
+
+		expect(processFiles(['subjects/access.ts'])).toEqual(expected);
 	});
 });
 

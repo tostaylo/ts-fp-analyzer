@@ -1,10 +1,11 @@
 export {};
 
+let a = { b: 1 };
 function one() {
-	let a = 'a';
-	a = 'b';
+	a.b;
 
 	function two() {
-		let b = a;
+		let a = { b: 1 };
+		a.b;
 	}
 }

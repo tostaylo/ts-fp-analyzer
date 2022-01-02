@@ -78,6 +78,7 @@ function checkNode(
 		addToCtx(context, namespace, ctx, { locals: { ...locals, ...local } });
 	}
 
+	// Not sure about this one yet.
 	if (ts.isBinaryExpression(node)) {
 		const child = node.getChildAt(0);
 		const firstToken = node.getFirstToken();
@@ -85,21 +86,28 @@ function checkNode(
 		const isLocal = ctx?.locals[name];
 		const isParam = ctx?.params[name];
 
+		// handle object and array assignment from params - mutates from a outer scope
+		// a.hi = "bye"  b[0] = 2
 		if (
 			(isParam && child.kind === ts.SyntaxKind.PropertyAccessExpression) ||
 			child.kind === ts.SyntaxKind.ElementAccessExpression
 		) {
-			// handle object and array assignment from params - mutates from a outer scope
-			// a.hi = "bye"  b[0] = 2
-			addToCtx(context, namespace, ctx, { mutatesOutsideScope: true });
-		} else if (isParam) {
-			// handle primitives variable reassignment from params like strings or numbers
-			// a = 2
-			addToCtx(context, namespace, ctx, { mutatesInScope: true });
+			addToCtx(context, namespace, ctx, {
+				mutatesOutsideScope: true,
+				accesses: { ...ctx.accesses, outsideScope: true },
+			});
+		}
+		// handle primitives variable reassignment from params like strings or numbers
+		// a = 2
+		else if (isParam) {
+			addToCtx(context, namespace, ctx, { mutatesInScope: true, accesses: { ...ctx.accesses, inScope: true } });
 		} else if (isLocal) {
-			addToCtx(context, namespace, ctx, { mutatesInScope: true });
+			addToCtx(context, namespace, ctx, { mutatesInScope: true, accesses: { ...ctx.accesses, inScope: true } });
 		} else {
-			addToCtx(context, namespace, ctx, { mutatesOutsideScope: true });
+			addToCtx(context, namespace, ctx, {
+				mutatesOutsideScope: true,
+				accesses: { ...ctx.accesses, outsideScope: true },
+			});
 		}
 	}
 
@@ -114,16 +122,14 @@ function checkNode(
 		const firstToken = node.getFirstToken();
 		const name = firstToken?.getText() as string;
 		const isLocal = ctx?.locals[name];
-		const isParam = ctx?.params[name];
 
 		if (declarationKind === ts.SyntaxKind.MethodSignature) {
 			// here is where I write a function to determine what is a mutator on array and objects
 			// mutates{inScope: true or false, outsideScope: true or false}
 			console.log(name);
 		}
-		if (isParam) {
-			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, outsideScope: true } });
-		} else if (isLocal) {
+
+		if (isLocal) {
 			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, inScope: true } });
 		} else {
 			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, outsideScope: true } });
