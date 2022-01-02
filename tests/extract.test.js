@@ -79,7 +79,7 @@ describe('mutations', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: globalKind,
-				mutatesInScope: true,
+				mutates: { inScope: true, outsideScope: false },
 				locals: createLocals({}, [{ name: 'a', type: 'number' }]),
 				childFns: ['one', 'two'],
 				accesses: { inScope: true, outsideScope: false },
@@ -92,8 +92,7 @@ describe('mutations', () => {
 					...defaultCtx,
 					namespace: globalNamespace,
 					kind: functionDeclarationKind,
-					mutatesInScope: true,
-					mutatesOutsideScope: true,
+					mutates: { inScope: true, outsideScope: true },
 					locals: createLocals({}, [{ name: 'b', type: 'number' }]),
 					accesses: { inScope: true, outsideScope: true },
 				})
@@ -106,7 +105,7 @@ describe('mutations', () => {
 					...defaultCtx,
 					namespace: globalNamespace,
 					kind: functionDeclarationKind,
-					mutatesInScope: true,
+					mutates: { inScope: true, outsideScope: false },
 					locals: createLocals({}, [{ name: 'a', type: 'number' }]),
 					accesses: { inScope: true, outsideScope: false },
 				})
@@ -133,7 +132,7 @@ describe('mutations', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
-				mutatesOutsideScope: true,
+				mutates: { inScope: false, outsideScope: true },
 				params: createParams({}, [{ name: 'a', type: 'any' }]),
 				accesses: { inScope: false, outsideScope: true },
 			})
@@ -144,7 +143,7 @@ describe('mutations', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
-				mutatesOutsideScope: true,
+				mutates: { inScope: false, outsideScope: true },
 				params: createParams({}, [{ name: 'b', type: 'any' }]),
 				accesses: { inScope: false, outsideScope: true },
 			})
@@ -155,7 +154,7 @@ describe('mutations', () => {
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
-				mutatesInScope: true,
+				mutates: { inScope: true, outsideScope: false },
 				params: createParams({}, [{ name: 'c', type: 'any' }]),
 				accesses: { inScope: true, outsideScope: false },
 			})
@@ -200,6 +199,12 @@ describe('call expressions', () => {
 		expect(processFiles(['subjects/calls/hoisting.ts'])).toEqual(expected);
 	});
 
+	// test.only('given a call expression should detect method signature', () => {
+	// 	expect(processFiles(['subjects/calls/method.ts'])).toEqual(null);
+	// });
+});
+
+describe('property accesss', () => {
 	test('given property access should detect inScope or outsideScope', () => {
 		const expected = new Map();
 

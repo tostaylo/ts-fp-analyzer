@@ -93,19 +93,25 @@ function checkNode(
 			child.kind === ts.SyntaxKind.ElementAccessExpression
 		) {
 			addToCtx(context, namespace, ctx, {
-				mutatesOutsideScope: true,
+				mutates: { ...ctx.mutates, outsideScope: true },
 				accesses: { ...ctx.accesses, outsideScope: true },
 			});
 		}
 		// handle primitives variable reassignment from params like strings or numbers
 		// a = 2
 		else if (isParam) {
-			addToCtx(context, namespace, ctx, { mutatesInScope: true, accesses: { ...ctx.accesses, inScope: true } });
+			addToCtx(context, namespace, ctx, {
+				mutates: { ...ctx.mutates, inScope: true },
+				accesses: { ...ctx.accesses, inScope: true },
+			});
 		} else if (isLocal) {
-			addToCtx(context, namespace, ctx, { mutatesInScope: true, accesses: { ...ctx.accesses, inScope: true } });
+			addToCtx(context, namespace, ctx, {
+				mutates: { ...ctx.mutates, inScope: true },
+				accesses: { ...ctx.accesses, inScope: true },
+			});
 		} else {
 			addToCtx(context, namespace, ctx, {
-				mutatesOutsideScope: true,
+				mutates: { ...ctx.mutates, outsideScope: true },
 				accesses: { ...ctx.accesses, outsideScope: true },
 			});
 		}
@@ -115,6 +121,7 @@ function checkNode(
 	// An action has side effects
 	// A calculation does not cause side effects directly or through calling functions, must not read from out of scope???, and must a return a value
 
+	// may need to add OR here for Element Access Expression
 	if (ts.isPropertyAccessExpression(node)) {
 		const symbol = typeChecker.getSymbolAtLocation(node);
 		const declaration = symbol?.valueDeclaration;
@@ -126,7 +133,7 @@ function checkNode(
 		if (declarationKind === ts.SyntaxKind.MethodSignature) {
 			// here is where I write a function to determine what is a mutator on array and objects
 			// mutates{inScope: true or false, outsideScope: true or false}
-			console.log(name);
+			console.log({ name }, 'is Method');
 		}
 
 		if (isLocal) {
@@ -148,6 +155,7 @@ function checkNode(
 
 	if (ts.isCallExpression(node)) {
 		const name = node.expression.getText();
+		console.log({ node, name });
 		const fnCalls = ctx?.fnCalls;
 		const fnCall = createFnCall({ name, namespace });
 
