@@ -2,14 +2,27 @@ import * as ts from 'typescript';
 import { ContextMap, Ctx } from '../types';
 import { createLocal, createFnCall, addToCtx, setNewContext, createParam } from '../utils';
 
+const arrayMutators = {
+	push: true,
+	pop: true,
+	shift: true,
+	unshift: true,
+	reverse: true,
+	sort: true,
+	splice: true,
+};
+
 function detectMethod(node: ts.Node, typeChecker: ts.TypeChecker): { lib: boolean; mutates: boolean } {
 	if (ts.isPropertyAccessExpression(node)) {
 		const symbol = typeChecker.getSymbolAtLocation(node);
 
+		// This will not work for strings
+		// need to detect type of data the method is acting on before checking for Method Signature
+
 		// method on object literal is PropertyAssignment
 		// method on custom class is MethodDeclaration
 		if (symbol?.valueDeclaration?.kind === ts.SyntaxKind.MethodSignature) {
-			if (symbol.escapedName === 'push') {
+			if (arrayMutators[symbol.escapedName as keyof typeof arrayMutators]) {
 				return { lib: true, mutates: true };
 			}
 		}
@@ -34,11 +47,10 @@ export function processFiles(filenames: string[]): ContextMap {
 			checkNode(node, context, typeChecker);
 		});
 	});
-	// console.log(context);
+
 	return context;
 }
 
-//namespace needs to be an array to show heirarchy
 function checkNode(
 	node: ts.Node,
 	context: ContextMap,
@@ -154,6 +166,9 @@ function checkNode(
 
 	if (ts.isCallExpression(node)) {
 		const firstChild = node.getChildAt(0);
+		// can I get type of variable being accessed right here?
+		// detectMethod needs to know. Or I could change to
+		// detectArrayMethod, detectStringMethod, detectObjectMethod, detectObjectConstructorMethod
 		const { mutates, lib } = detectMethod(firstChild, typeChecker);
 		const fnCalls = ctx?.fnCalls;
 		const name = node.expression.getText();
