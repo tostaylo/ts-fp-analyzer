@@ -199,9 +199,26 @@ describe('call expressions', () => {
 		expect(processFiles(['subjects/calls/hoisting.ts'])).toEqual(expected);
 	});
 
-	// test.only('given a call expression should detect method signature', () => {
-	// 	expect(processFiles(['subjects/calls/method.ts'])).toEqual(null);
-	// });
+	test('given a call expression should detect methods mutate status', () => {
+		const expected = new Map();
+		expected.set(
+			globalNamespace,
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: globalKind,
+				locals: createLocals({}, [{ name: 'one', type: '{ a: { push: () => any; }; b: number[]; }' }]),
+				fnCalls: createFnCalls({}, [
+					{ name: 'one.a.push', namespace: globalNamespace, lib: false, mutates: false },
+					{ name: 'one.b.push', namespace: globalNamespace, lib: true, mutates: true },
+				]),
+				mutates: { inScope: true, outsideScope: false },
+				accesses: { inScope: true, outsideScope: false },
+			})
+		);
+
+		expect(processFiles(['subjects/calls/method.ts'])).toEqual(expected);
+	});
 });
 
 describe('property accesss', () => {

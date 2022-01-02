@@ -2,8 +2,6 @@ import * as ts from 'typescript';
 import { ContextMap, Ctx } from '../types';
 import { createLocal, createFnCall, addToCtx, setNewContext, createParam } from '../utils';
 
-// add a child pointer to the parent node
-
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
 
@@ -78,7 +76,6 @@ function checkNode(
 		addToCtx(context, namespace, ctx, { locals: { ...locals, ...local } });
 	}
 
-	// Not sure about this one yet.
 	if (ts.isBinaryExpression(node)) {
 		const child = node.getChildAt(0);
 		const firstToken = node.getFirstToken();
@@ -117,24 +114,11 @@ function checkNode(
 		}
 	}
 
-	// How to detect actions vs calculations
-	// An action has side effects
-	// A calculation does not cause side effects directly or through calling functions, must not read from out of scope???, and must a return a value
-
 	// may need to add OR here for Element Access Expression
 	if (ts.isPropertyAccessExpression(node)) {
-		const symbol = typeChecker.getSymbolAtLocation(node);
-		const declaration = symbol?.valueDeclaration;
-		const declarationKind = declaration?.kind;
 		const firstToken = node.getFirstToken();
 		const name = firstToken?.getText() as string;
 		const isLocal = ctx?.locals[name];
-
-		if (declarationKind === ts.SyntaxKind.MethodSignature) {
-			// here is where I write a function to determine what is a mutator on array and objects
-			// mutates{inScope: true or false, outsideScope: true or false}
-			console.log({ name }, 'is Method');
-		}
 
 		if (isLocal) {
 			addToCtx(context, namespace, ctx, { accesses: { ...ctx.accesses, inScope: true } });
@@ -154,12 +138,34 @@ function checkNode(
 	}
 
 	if (ts.isCallExpression(node)) {
-		const name = node.expression.getText();
-		console.log({ node, name });
-		const fnCalls = ctx?.fnCalls;
-		const fnCall = createFnCall({ name, namespace });
+		const firstChild = node.getChildAt(0);
 
-		addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
+		let mutates = false;
+		let lib = false;
+		if (ts.isPropertyAccessExpression(firstChild)) {
+			const symbol = typeChecker.getSymbolAtLocation(firstChild);
+
+			// method on object literal is PropertyAssignment
+			// method on custom class is MethodDeclaration
+			if (symbol?.valueDeclaration?.kind === ts.SyntaxKind.MethodSignature) {
+				if (symbol.escapedName === 'push') {
+					mutates = true;
+					lib = true;
+				}
+			}
+		}
+
+		const fnCalls = ctx?.fnCalls;
+		const name = node.expression.getText();
+		const accessName = name.split('.')[0];
+		const isLocal = ctx?.locals[accessName];
+		const fnCall = createFnCall({ name, namespace, mutates, lib });
+		if (mutates) {
+			const scope = isLocal ? { inScope: true } : { outsideScope: true };
+			addToCtx(context, namespace, ctx, { mutates: { ...ctx.mutates, ...scope }, fnCalls: { ...fnCalls, ...fnCall } });
+		} else {
+			addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
+		}
 	}
 
 	// TODO: Handle returns from arrow functions

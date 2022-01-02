@@ -1,12 +1,12 @@
 import { ContextMap, Ctx, FnCall, Local, Param } from '../types';
 
-export function createFnCall({ name, namespace }: FnCall): Ctx['fnCalls'] {
-	return { [`${namespace}.${name}`]: { name, namespace } };
+export function createFnCall({ name, namespace, lib = false, mutates = false }: FnCall): Ctx['fnCalls'] {
+	return { [`${namespace}.${name}`]: { name, namespace, lib, mutates } };
 }
 
 export function createFnCalls(currentFnCalls: Ctx['fnCalls'], newFnCalls: FnCall[]): Ctx['fnCalls'] {
-	return newFnCalls.reduce((acc, { name, namespace }) => {
-		return { ...acc, ...createFnCall({ name, namespace }) };
+	return newFnCalls.reduce((acc, { name, namespace, lib, mutates }) => {
+		return { ...acc, ...createFnCall({ name, namespace, lib, mutates }) };
 	}, currentFnCalls);
 }
 

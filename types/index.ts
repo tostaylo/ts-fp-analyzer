@@ -1,4 +1,4 @@
-export type FnCall = { name: string; namespace: string };
+export type FnCall = { name: string; namespace: string; mutates: boolean; lib: boolean };
 export type Local = { name: string; type: string };
 export type Param = { name: string; type: string };
 
