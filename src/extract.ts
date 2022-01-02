@@ -2,6 +2,21 @@ import * as ts from 'typescript';
 import { ContextMap, Ctx } from '../types';
 import { createLocal, createFnCall, addToCtx, setNewContext, createParam } from '../utils';
 
+function detectMethod(node: ts.Node, typeChecker: ts.TypeChecker): { lib: boolean; mutates: boolean } {
+	if (ts.isPropertyAccessExpression(node)) {
+		const symbol = typeChecker.getSymbolAtLocation(node);
+
+		// method on object literal is PropertyAssignment
+		// method on custom class is MethodDeclaration
+		if (symbol?.valueDeclaration?.kind === ts.SyntaxKind.MethodSignature) {
+			if (symbol.escapedName === 'push') {
+				return { lib: true, mutates: true };
+			}
+		}
+	}
+	return { lib: false, mutates: false };
+}
+
 export function processFiles(filenames: string[]): ContextMap {
 	const context: ContextMap = new Map();
 
@@ -139,27 +154,13 @@ function checkNode(
 
 	if (ts.isCallExpression(node)) {
 		const firstChild = node.getChildAt(0);
-
-		let mutates = false;
-		let lib = false;
-		if (ts.isPropertyAccessExpression(firstChild)) {
-			const symbol = typeChecker.getSymbolAtLocation(firstChild);
-
-			// method on object literal is PropertyAssignment
-			// method on custom class is MethodDeclaration
-			if (symbol?.valueDeclaration?.kind === ts.SyntaxKind.MethodSignature) {
-				if (symbol.escapedName === 'push') {
-					mutates = true;
-					lib = true;
-				}
-			}
-		}
-
+		const { mutates, lib } = detectMethod(firstChild, typeChecker);
 		const fnCalls = ctx?.fnCalls;
 		const name = node.expression.getText();
 		const accessName = name.split('.')[0];
 		const isLocal = ctx?.locals[accessName];
 		const fnCall = createFnCall({ name, namespace, mutates, lib });
+
 		if (mutates) {
 			const scope = isLocal ? { inScope: true } : { outsideScope: true };
 			addToCtx(context, namespace, ctx, { mutates: { ...ctx.mutates, ...scope }, fnCalls: { ...fnCalls, ...fnCall } });
