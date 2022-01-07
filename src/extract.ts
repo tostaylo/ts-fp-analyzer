@@ -12,9 +12,14 @@ const arrayMutators = {
 	splice: true,
 };
 
-function detectMethod(node: ts.Node, typeChecker: ts.TypeChecker): { lib: boolean; mutates: boolean } {
-	if (ts.isPropertyAccessExpression(node)) {
-		const symbol = typeChecker.getSymbolAtLocation(node);
+function detectMethod(
+	node: ts.CallExpression,
+	typeChecker: ts.TypeChecker
+): { lib: boolean; mutates: boolean; name: string; accessName: string } {
+	const firstChild = node.getChildAt(0);
+
+	if (ts.isPropertyAccessExpression(firstChild)) {
+		const symbol = typeChecker.getSymbolAtLocation(firstChild);
 
 		// This will not work for strings
 		// need to detect type of data the method is acting on before checking for Method Signature
@@ -22,12 +27,30 @@ function detectMethod(node: ts.Node, typeChecker: ts.TypeChecker): { lib: boolea
 		// method on object literal is PropertyAssignment
 		// method on custom class is MethodDeclaration
 		if (symbol?.valueDeclaration?.kind === ts.SyntaxKind.MethodSignature) {
+			const firstToken = firstChild.getFirstToken();
+			const type = typeChecker.getTypeAtLocation(firstToken as ts.Node);
+			const typeName = typeChecker.typeToString(type, node);
+
+			if (typeName === 'ObjectConstructor') {
+				if (symbol.escapedName === 'assign') {
+					const firstArg = node.arguments[0];
+					const name = node.expression.getText();
+					const accessName = firstArg.getText().split('.')[0];
+					console.log({ name, accessName });
+					return { lib: true, mutates: true, name, accessName };
+				}
+			}
 			if (arrayMutators[symbol.escapedName as keyof typeof arrayMutators]) {
-				return { lib: true, mutates: true };
+				const name = node.expression.getText();
+				const accessName = name.split('.')[0];
+
+				return { lib: true, mutates: true, name, accessName };
 			}
 		}
 	}
-	return { lib: false, mutates: false };
+	const name = node.expression.getText();
+	const accessName = name.split('.')[0];
+	return { lib: false, mutates: false, name, accessName };
 }
 
 export function processFiles(filenames: string[]): ContextMap {
@@ -165,16 +188,14 @@ function checkNode(
 	}
 
 	if (ts.isCallExpression(node)) {
-		const firstChild = node.getChildAt(0);
 		// can I get type of variable being accessed right here?
 		// detectMethod needs to know. Or I could change to
 		// detectArrayMethod, detectStringMethod, detectObjectMethod, detectObjectConstructorMethod
-		const { mutates, lib } = detectMethod(firstChild, typeChecker);
-		const fnCalls = ctx?.fnCalls;
-		const name = node.expression.getText();
-		const accessName = name.split('.')[0];
-		const isLocal = ctx?.locals[accessName];
+		const { mutates, lib, name, accessName } = detectMethod(node, typeChecker);
+
 		const fnCall = createFnCall({ name, namespace, mutates, lib });
+		const fnCalls = ctx?.fnCalls;
+		const isLocal = ctx?.locals[accessName];
 
 		if (mutates) {
 			const scope = isLocal ? { inScope: true } : { outsideScope: true };

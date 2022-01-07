@@ -199,7 +199,7 @@ describe('call expressions', () => {
 		expect(processFiles(['subjects/calls/hoisting.ts'])).toEqual(expected);
 	});
 
-	test('given a call expression should detect methods mutate status', () => {
+	test('given a call expression should detect array methods mutate status if is known mutator', () => {
 		const expected = new Map();
 		expected.set(
 			globalNamespace,
@@ -217,7 +217,13 @@ describe('call expressions', () => {
 			})
 		);
 
-		expect(processFiles(['subjects/calls/method.ts'])).toEqual(expected);
+		expect(processFiles(['subjects/calls/methods/arrays.ts'])).toEqual(expected);
+	});
+
+	test.only('given a call expression should detect object methods mutate status if is known mutator', () => {
+		const expected = new Map();
+
+		expect(processFiles(['subjects/calls/methods/objects.ts'])).toEqual(expected);
 	});
 });
 
