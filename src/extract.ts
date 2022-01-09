@@ -194,18 +194,18 @@ function checkNode(
 	}
 
 	if (ts.isCallExpression(node)) {
-		// can I get type of variable being accessed right here?
-		// detectMethod needs to know. Or I could change to
-		// detectArrayMethod, detectStringMethod, detectObjectMethod, detectObjectConstructorMethod
+		// TODO: detectArrayMethod, detectStringMethod, detectObjectMethod, detectObjectConstructorMethod
 		const { mutates, lib, name, accessNames } = detectMethod(node, typeChecker);
 
 		const fnCall = createFnCall({ name, namespace, mutates, lib });
 		const fnCalls = ctx?.fnCalls;
-		const isLocal = Object.keys(ctx?.locals).some((item) => accessNames.includes(item));
-		const scope = isLocal ? { inScope: true } : { outsideScope: true };
-		const accesses = isLocal ? { inScope: true } : { outsideScope: true };
 
+		// Right now this is only checking mutations on propertyAccessExpressions
 		if (mutates) {
+			const isLocal = Object.keys(ctx?.locals).some((item) => accessNames.includes(item));
+			const scope = isLocal ? { inScope: true } : { outsideScope: true };
+			const accesses = isLocal ? { inScope: true } : { outsideScope: true };
+
 			addToCtx(context, namespace, ctx, {
 				mutates: { ...ctx.mutates, ...scope },
 				accesses: { ...ctx.accesses, ...accesses },
@@ -213,7 +213,6 @@ function checkNode(
 			});
 		} else {
 			addToCtx(context, namespace, ctx, {
-				accesses: { ...ctx.accesses, ...accesses },
 				fnCalls: { ...fnCalls, ...fnCall },
 			});
 		}

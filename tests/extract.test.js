@@ -24,9 +24,12 @@ describe('functions', () => {
 				]),
 			})
 		);
-		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
 		expected.set(
-			'global.two',
+			`${globalNamespace}.one`,
+			createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind })
+		);
+		expected.set(
+			`${globalNamespace}.two`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -57,7 +60,7 @@ describe('variables', () => {
 		);
 
 		expected.set(
-			'global.one',
+			`${globalNamespace}.one`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -86,7 +89,7 @@ describe('mutations', () => {
 			})
 		);
 		expected.set(
-			'global.one',
+			`${globalNamespace}.one`,
 			createCtx(
 				createCtx({
 					...defaultCtx,
@@ -99,7 +102,7 @@ describe('mutations', () => {
 			)
 		);
 		expected.set(
-			'global.two',
+			`${globalNamespace}.two`,
 			createCtx(
 				createCtx({
 					...defaultCtx,
@@ -127,7 +130,7 @@ describe('mutations', () => {
 			})
 		);
 		expected.set(
-			'global.one',
+			`${globalNamespace}.one`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -138,7 +141,7 @@ describe('mutations', () => {
 			})
 		);
 		expected.set(
-			'global.two',
+			`${globalNamespace}.two`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -180,20 +183,23 @@ describe('call expressions', () => {
 				childFns: ['one', 'two'],
 			})
 		);
-		expected.set('global.one', createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind }));
 		expected.set(
-			'global.two',
+			`${globalNamespace}.one`,
+			createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind })
+		);
+		expected.set(
+			`${globalNamespace}.two`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
 				kind: functionDeclarationKind,
-				fnCalls: createFnCalls({}, [{ name: 'three', namespace: 'global.two' }]),
+				fnCalls: createFnCalls({}, [{ name: 'three', namespace: `${globalNamespace}.two` }]),
 				childFns: ['three'],
 			})
 		);
 		expected.set(
 			'global.two.three',
-			createCtx({ ...defaultCtx, namespace: 'global.two', kind: functionDeclarationKind })
+			createCtx({ ...defaultCtx, namespace: `${globalNamespace}.two`, kind: functionDeclarationKind })
 		);
 
 		expect(processFiles(['subjects/calls/hoisting.ts'])).toEqual(expected);
@@ -220,7 +226,7 @@ describe('call expressions', () => {
 		expect(processFiles(['subjects/calls/methods/arrays.ts'])).toEqual(expected);
 	});
 
-	test.only('given a call expression should detect object methods mutate status if is known mutator', () => {
+	test('given a call expression should detect object methods mutate status if is known mutator', () => {
 		const expected = new Map();
 
 		expected.set(
@@ -235,7 +241,7 @@ describe('call expressions', () => {
 		);
 
 		expected.set(
-			'global.one',
+			`${globalNamespace}.one`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -249,7 +255,7 @@ describe('call expressions', () => {
 		);
 
 		expected.set(
-			'global.two',
+			`${globalNamespace}.two`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -285,7 +291,7 @@ describe('property accesss', () => {
 			})
 		);
 		expected.set(
-			'global.one',
+			`${globalNamespace}.one`,
 			createCtx({
 				...defaultCtx,
 				namespace: globalNamespace,
@@ -322,7 +328,7 @@ describe('returns', () => {
 			})
 		);
 		expected.set(
-			'global.one',
+			`${globalNamespace}.one`,
 			createCtx({ ...defaultCtx, namespace: globalNamespace, kind: functionDeclarationKind, returns: ['1'] })
 		);
 
@@ -342,7 +348,7 @@ describe('returns', () => {
 				})
 			);
 			expected.set(
-				'global.one',
+				`${globalNamespace}.one`,
 				createCtx({
 					...defaultCtx,
 					namespace: globalNamespace,
