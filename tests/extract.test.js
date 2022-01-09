@@ -223,6 +223,49 @@ describe('call expressions', () => {
 	test.only('given a call expression should detect object methods mutate status if is known mutator', () => {
 		const expected = new Map();
 
+		expected.set(
+			globalNamespace,
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: globalKind,
+				locals: createLocals({}, [{ name: 'a', type: '{}' }]),
+				childFns: ['one', 'two'],
+			})
+		);
+
+		expected.set(
+			'global.one',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				mutates: { inScope: false, outsideScope: true },
+				accesses: { inScope: false, outsideScope: true },
+				fnCalls: createFnCalls({}, [
+					{ name: 'Object.assign', namespace: `${globalNamespace}.one`, lib: true, mutates: true },
+				]),
+			})
+		);
+
+		expected.set(
+			'global.two',
+			createCtx({
+				...defaultCtx,
+				namespace: globalNamespace,
+				kind: functionDeclarationKind,
+				mutates: { inScope: true, outsideScope: false },
+				accesses: { inScope: true, outsideScope: false },
+				fnCalls: createFnCalls({}, [
+					{ name: 'Object.assign', namespace: `${globalNamespace}.two`, lib: true, mutates: true },
+				]),
+				locals: createLocals({}, [
+					{ name: 'b', type: '{}' },
+					{ name: 'c', type: '{}' },
+				]),
+			})
+		);
+
 		expect(processFiles(['subjects/calls/methods/objects.ts'])).toEqual(expected);
 	});
 });

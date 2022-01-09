@@ -15,7 +15,7 @@ const arrayMutators = {
 function detectMethod(
 	node: ts.CallExpression,
 	typeChecker: ts.TypeChecker
-): { lib: boolean; mutates: boolean; name: string; accessName: string } {
+): { lib: boolean; mutates: boolean; name: string; accessNames: string[] } {
 	const firstChild = node.getChildAt(0);
 
 	if (ts.isPropertyAccessExpression(firstChild)) {
@@ -33,24 +33,25 @@ function detectMethod(
 
 			if (typeName === 'ObjectConstructor') {
 				if (symbol.escapedName === 'assign') {
-					const firstArg = node.arguments[0];
+					const firstArg = node.arguments[0].getText().split('.')[0];
+					const secondArg = node.arguments[1].getText().split('.')[0];
 					const name = node.expression.getText();
-					const accessName = firstArg.getText().split('.')[0];
-					console.log({ name, accessName });
-					return { lib: true, mutates: true, name, accessName };
+
+					return { lib: true, mutates: true, name, accessNames: [firstArg, secondArg] };
 				}
 			}
 			if (arrayMutators[symbol.escapedName as keyof typeof arrayMutators]) {
 				const name = node.expression.getText();
-				const accessName = name.split('.')[0];
+				const accessNames = [name.split('.')[0]];
 
-				return { lib: true, mutates: true, name, accessName };
+				return { lib: true, mutates: true, name, accessNames };
 			}
 		}
 	}
 	const name = node.expression.getText();
-	const accessName = name.split('.')[0];
-	return { lib: false, mutates: false, name, accessName };
+	const accessNames = [name.split('.')[0]];
+
+	return { lib: false, mutates: false, name, accessNames };
 }
 
 export function processFiles(filenames: string[]): ContextMap {
@@ -167,6 +168,11 @@ function checkNode(
 	// may need to add OR here for Element Access Expression
 	if (ts.isPropertyAccessExpression(node)) {
 		const firstToken = node.getFirstToken();
+		const type = typeChecker.getTypeAtLocation(firstToken as ts.Node);
+		const typeName = typeChecker.typeToString(type, node);
+
+		if (typeName === 'ObjectConstructor') return;
+
 		const name = firstToken?.getText() as string;
 		const isLocal = ctx?.locals[name];
 
@@ -191,17 +197,25 @@ function checkNode(
 		// can I get type of variable being accessed right here?
 		// detectMethod needs to know. Or I could change to
 		// detectArrayMethod, detectStringMethod, detectObjectMethod, detectObjectConstructorMethod
-		const { mutates, lib, name, accessName } = detectMethod(node, typeChecker);
+		const { mutates, lib, name, accessNames } = detectMethod(node, typeChecker);
 
 		const fnCall = createFnCall({ name, namespace, mutates, lib });
 		const fnCalls = ctx?.fnCalls;
-		const isLocal = ctx?.locals[accessName];
+		const isLocal = Object.keys(ctx?.locals).some((item) => accessNames.includes(item));
+		const scope = isLocal ? { inScope: true } : { outsideScope: true };
+		const accesses = isLocal ? { inScope: true } : { outsideScope: true };
 
 		if (mutates) {
-			const scope = isLocal ? { inScope: true } : { outsideScope: true };
-			addToCtx(context, namespace, ctx, { mutates: { ...ctx.mutates, ...scope }, fnCalls: { ...fnCalls, ...fnCall } });
+			addToCtx(context, namespace, ctx, {
+				mutates: { ...ctx.mutates, ...scope },
+				accesses: { ...ctx.accesses, ...accesses },
+				fnCalls: { ...fnCalls, ...fnCall },
+			});
 		} else {
-			addToCtx(context, namespace, ctx, { fnCalls: { ...fnCalls, ...fnCall } });
+			addToCtx(context, namespace, ctx, {
+				accesses: { ...ctx.accesses, ...accesses },
+				fnCalls: { ...fnCalls, ...fnCall },
+			});
 		}
 	}
 

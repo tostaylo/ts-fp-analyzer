@@ -1,4 +1,12 @@
 export {};
 
 let a = {};
-Object.assign(a, {});
+function one() {
+	Object.assign(a, {});
+}
+
+function two() {
+	const b = {};
+	const c = {};
+	Object.assign(b, c);
+}
